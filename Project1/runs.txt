@@ -1,0 +1,65 @@
+Dataset: Terrain
+Method: lasso
+Polynomials: [20 21 22 23 24 25 26 27 28 29 30]
+Parameters: [5.00000000e-06 3.34370152e-05 2.23606798e-04 1.49534878e-03
+ 1.00000000e-02]
+poly 11/11, param 5/5
+
+-----CV done-----
+Polynomial degree with best MSE: 28
+Param with best MSE: 5.000e-06
+MSE: 0.012626657645196843
+R2: 0.5394757872935371
+
+===========================================================================
+
+Dataset: Terrain
+Method: lasso
+Polynomials: [57 58 59 60]
+Parameters: [5.00000000e-06 2.23606798e-04 1.00000000e-02]
+poly 4/4, param 3/3
+
+-----CV done-----
+Polynomial degree with best MSE: 58
+Param with best MSE: 5.000e-06
+MSE: 0.012616651293789116
+R2: 0.5429825133630939
+
+===========================================================================
+
+Dataset: Terrain
+Method: lasso
+Polynomials: [35 36 37 38 39]
+Parameters: [5.00000000e-06 2.23606798e-04 1.00000000e-02]
+poly 5/5, param 3/3
+
+-----CV done-----
+Polynomial degree with best MSE: 39
+Param with best MSE: 5.000e-06
+MSE: 0.012592652185569358
+R2: 0.5460475786345632
+
+===========================================================================
+
+Dataset: Terrain
+Method: lasso
+Polynomials: [51 52 53]
+Parameters: [5.00000000e-06 2.23606798e-04 1.00000000e-02]
+poly 3/3, param 3/3
+
+-----CV done-----
+Polynomial degree with best MSE: 52
+Param with best MSE: 5.000e-06
+MSE: 0.012618589574307577
+R2: 0.5429092243488828
+
+===========================================================================
+
+Parameters: [3.00000000e-06 4.24264069e-06 6.00000000e-06]
+poly 1/1, param 3/3
+
+-----CV done-----
+Polynomial degree with best MSE: 45
+Param with best MSE: 3.000e-06
+MSE: 0.012538619902287088
+R2: 0.5482988727909515
