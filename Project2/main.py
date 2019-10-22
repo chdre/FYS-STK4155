@@ -25,6 +25,20 @@ def import_data():
               columns={df.columns[-1]: 'DefaultPaymentNextMonth'},
               inplace=True)
 
+    # Dropping rows where no billing and no payment
+    df = df.drop(df[(df.BILL_AMT1 == 0) &
+                    (df.BILL_AMT2 == 0) &
+                    (df.BILL_AMT3 == 0) &
+                    (df.BILL_AMT4 == 0) &
+                    (df.BILL_AMT5 == 0) &
+                    (df.BILL_AMT6 == 0)].index)
+    df = df.drop(df[(df.PAY_AMT1 == 0) &
+                    (df.PAY_AMT2 == 0) &
+                    (df.PAY_AMT3 == 0) &
+                    (df.PAY_AMT4 == 0) &
+                    (df.PAY_AMT5 == 0) &
+                    (df.PAY_AMT6 == 0)].index)
+
     # Features and targets
     x = df.loc[:, df.columns != 'DefaultPaymentNextMonth'].values
     y = df.loc[:, df.columns == 'DefaultPaymentNextMonth'].values
@@ -34,29 +48,15 @@ def import_data():
 
     # Train-test split
     train_size_ = 0.8
-    xtest, xtrain, ytest, ytrain = train_test_split(
-        x, y, train_size=train_size_, test_size=1 - train_size_)
+    Xtest, Xtrain, ytest, ytrain = train_test_split(
+        X, y, train_size=train_size_, test_size=1 - train_size_)
 
     # Scaling
     scale = StandardScaler()   # Scales by (func - mean)/std.dev
-    xtrain = scale.fit_transform(xtrain)
-    xtest = scale.transform(xtest)
+    Xtrain = scale.fit_transform(Xtrain)
+    Xtest = scale.transform(Xtest)
 
-    df = df.drop(df[(df.BILL_AMT1 == 0) &
-                    (df.BILL_AMT2 == 0) &
-                    (df.BILL_AMT3 == 0) &
-                    (df.BILL_AMT4 == 0) &
-                    (df.BILL_AMT5 == 0) &
-                    (df.BILL_AMT6 == 0)].index)
-
-    df = df.drop(df[(df.PAY_AMT1 == 0) &
-                    (df.PAY_AMT2 == 0) &
-                    (df.PAY_AMT3 == 0) &
-                    (df.PAY_AMT4 == 0) &
-                    (df.PAY_AMT5 == 0) &
-                    (df.PAY_AMT6 == 0)].index)
-
-    return xtrain, xtest,
+    return Xtrain, Xtest, ytrain, ytest
 
 
 def cost_function(X, y, beta):
@@ -84,8 +84,8 @@ def stochastic_gradient_descent(X, y, beta,
                 eta = learning_schedule(epoch * m + i)
                 beta -= eta * gradient
 
-            beta_old = beta
-            beta = beta_new
+                beta_old = beta
+                beta = beta_new
 
         return beta_new
 
@@ -106,7 +106,7 @@ def stochastic_gradient_descent(X, y, beta,
 
 def main():
 
-    beta = np.random.randn(len(x[0]), 1)
+    beta = np.random.randn(len(x[:, 0]), 1)
 
 
 if __name__ == '__main__':
