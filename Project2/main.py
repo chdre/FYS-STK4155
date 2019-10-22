@@ -14,8 +14,6 @@ np.random.seed(0)
 
 
 def import_data():
-    np.random.seed(0)
-
     cwd = os.getcwd()   # Current working directory
     filename = cwd + '/data/default of credit card clients.xls'
     nanDict = {}    # To store NaN from CC data when reading with pandas?
@@ -70,21 +68,45 @@ def stochastic_gradient_descent(X, y, beta,
                                 eps=1e-5, n=100, eta=0.1,
                                 mini_batch=False, n_epochs=50):  # stochastic GD
     """ stochastic gradient descent"""
+
+    def learning_schedule(t, t0=5, t1=50): return t0 / (t + t1)
+
     if mini_batch:
-        for e in range(n_epochs):
-            for i in range(n):
-                random_idx = np.random.randint(n)
-                xi = X[random_idx:random_idx + 1]
-    for i in range(n):
-        beta_new = beta - eta *
-        if abs(np.sum(beta - beta_new)) < eps:
-            return beta_new
-        beta = beta_new
+        for epoch in range(n_epochs):
+            while np.abs(beta_old - beta_new) < eps or iter < n:
+                rand_idx1 = np.random.randint(int(n / 2))
+                rand_idx2 = np.random.randint(int(n / 2))
+                xi = X[rand_idx1:rand_idx + 1,
+                       rand_idx2:rand_idx2 + 1]  # Matrix
+                yi = y[rand_idx1:rand_idx1 + 1]  # Array
+                P = np.exp(X @ beta) / (1 + np.exp(X @ beta))
+                gradient = X.T @ (P - y)
+                eta = learning_schedule(epoch * m + i)
+                beta -= eta * gradient
+
+            beta_old = beta
+            beta = beta_new
+
+        return beta_new
+
+    if not mini_batch:
+        for i in range(n):
+            P = np.exp(X @ beta) / (1 + np.exp(X @ beta))
+            gradient = X.T  @ (P - y)
+            beta_new = beta - eta * gradient
+
+            if abs(np.sum(beta - beta_new)) < eps:
+                return beta_new
+
+            beta_old = beta
+            beta = beta_new
+
+    return beta
 
 
 def main():
 
-    beta = np.random.randn()
+    beta = np.random.randn(len(x[0]), 1)
 
 
 if __name__ == '__main__':
