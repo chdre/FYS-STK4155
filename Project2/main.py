@@ -9,7 +9,6 @@ import tensorflow as tf
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification, load_breast_cancer
 from sklearn.linear_model import LogisticRegression
 
 
@@ -145,8 +144,8 @@ def main():
     pred_SGD = (prob_SGD >= 0.5).astype(int)
 
     clf = LogisticRegression(solver='lbfgs')
-    clf_fit = clf.fit(xtrain, ytrain)
-    pred_skl = xtest @ pred_skl.coef_
+    clf_fit = clf.fit(xtrain, np.ravel(ytrain))
+    pred_skl = xtest @ clf_fit.coef_.T
 
     print(f"Accuracy score for own GD: {accuracy(pred_GD, ytest)}")
     print(f"Accuracy score for own SGD: {accuracy(pred_SGD, ytest)}")
@@ -154,7 +153,7 @@ def main():
 
     plot_confusion_matrix(ytest, pred_GD)
     plot_confusion_matrix(ytest, pred_SGD)
-    plot_confusion_matrix(ytest, )
+    plot_confusion_matrix(ytest, pred_skl)
 
 
 def plot_confusion_matrix(y, pred):
