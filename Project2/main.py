@@ -1,21 +1,27 @@
 import numpy as np
 import sklearn.linear_model as skl
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.metrics import mean_squared_error, r2_score, confusion_matrix
 import seaborn as sns
 import tensorflow as tf
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.metrics import confusion_matrix
 
 
 np.random.seed(42)
 
 
-def data_import():
+def learning_schedule(t, t0=5, t1=50): return t0 / (t + t1)
+
+
+def sigmoid(x, beta): return 1 / (1 + np.exp(-x @ beta))
+
+
+def data_import(plot_corr=True):
     """
     Imports credit card data, returns test and train set for design matrix and y.
     """
@@ -59,6 +65,15 @@ def data_import():
 
     y_onehot = onehotencoder.fit_transform(y)
 
+    if plot_corr:
+        df_scaled = df - df.mean()
+        corr = df_scaled.corr()
+        sns.heatmap(corr, annot=True, fmt='.2f')
+        plt.xticks(rotation=90)
+        # Because turning something 360 degrees helps??? :)
+        plt.yticks(rotation=360)
+        plt.show()
+
     return x, y
 
 
@@ -66,8 +81,6 @@ def gradient_descent(X, y, beta,
                      eps=1e-15, n=10000, eta=1e-6,
                      stochastic=False, n_epochs=100, m=500):  # stochastic GD
     """gradient descent"""
-    def learning_schedule(t, t0=5, t1=50): return t0 / (t + t1)
-
     beta_old = beta + 1  # Initial value for while loop
 
     if stochastic:
@@ -78,8 +91,7 @@ def gradient_descent(X, y, beta,
                 xi = X[rand_idx:rand_idx + 1]  # Matrix
                 yi = y[rand_idx:rand_idx + 1]  # Array
 
-                sigmoid = 1 / (1 + np.exp(-xi @ beta))
-                gradient = xi.T @ (sigmoid - yi)
+                gradient = xi.T @ (sigmoid(xi, beta) - yi)
 
                 eta = learning_schedule(epoch * m + iter)
                 beta_new = beta - eta * gradient
@@ -89,12 +101,9 @@ def gradient_descent(X, y, beta,
 
                 iter += 1
 
-        return beta
-
     if not stochastic:
         for i in range(n):
-            sigmoid = 1 / (1 + np.exp(-X @ beta))
-            gradient = X.T @ (sigmoid - y)
+            gradient = X.T @ (sigmoid(X, beta) - y)
             beta_new = beta - eta * gradient
 
             if abs(np.sum(beta - beta_new)) < eps:
@@ -104,7 +113,7 @@ def gradient_descent(X, y, beta,
             beta_old = beta
             beta = beta_new
 
-        return beta
+    return beta
 
 
 def accuracy(y_tilde, y):
@@ -126,7 +135,8 @@ def main():
 
     # Scaling
     scale = StandardScaler()   # Scales by (func - mean)/std.dev
-    xtrain = scale.fit_transform(xtrain)
+    scale.fit(xtrain)
+    xtrain = scale.transform(xtrain)
     xtest = scale.transform(xtest)
 
     Xtrain = np.c_[np.array([1] * len(xtrain[:, 0])), xtrain]
@@ -135,12 +145,12 @@ def main():
     beta_init = np.random.randn(len(Xtrain[0]), 1)
 
     beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=10000)
-    prob_GD = 1 / (1 + (np.exp(-Xtest @ beta_GD)))
+    prob_GD = sigmoid(Xtest, beta_GD)
     pred_GD = (prob_GD >= 0.5).astype(int)
 
     beta_SGD = gradient_descent(
         Xtrain, ytrain, beta_init, m=300, stochastic=True)
-    prob_SGD = 1 / (1 + (np.exp(-Xtest @ beta_SGD)))
+    prob_SGD = sigmoid(Xtest, beta_SGD)
     pred_SGD = (prob_SGD >= 0.5).astype(int)
 
     clf = LogisticRegression(solver='lbfgs')
