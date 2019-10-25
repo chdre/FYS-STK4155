@@ -1,5 +1,13 @@
 from main import gradient_descent, accuracy
 from sklearn.datasets import make_classification, load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
 
 
 def random_dataset():
@@ -38,11 +46,20 @@ def random_dataset():
     plot_confusion_matrix(ytest, pred_skl)
 
 
-def breast_cancer():
+def breast_cancer(plot_corr=False):
     dataset = load_breast_cancer()
 
     x = dataset.data
     y = dataset.target
+
+    if plot_corr:
+        df = pd.DataFrame(data=dataset)
+        corr = df.corr()
+        sns.heatmap(corr, annot=True, fmt='.2f')
+        plt.xticks(rotation=90)
+        # Because turning something 360 degrees helps??? :)
+        plt.yticks(rotation=360)
+        plt.show()
 
     # Scaling
     scale = StandardScaler()   # Scales by (func - mean)/std.dev
@@ -88,5 +105,5 @@ def plot_confusion_matrix(y, pred):
 
 
 if __name__ == "__main__":
-    random_dataset()
-    breast_cancer()
+    # random_dataset()
+    breast_cancer(plot_corr=False)
