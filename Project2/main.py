@@ -145,13 +145,13 @@ def main():
     beta_init = np.random.randn(len(Xtrain[0]), 1)
 
     beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=10000)
-    prob_GD = sigmoid(Xtest, beta_GD)
-    pred_GD = (prob_GD >= 0.5).astype(int)
+    prob_GD = round(sigmoid(Xtest, beta_GD))
+    # pred_GD = (prob_GD >= 0.5).astype(int)
 
     beta_SGD = gradient_descent(
         Xtrain, ytrain, beta_init, m=300, stochastic=True)
-    prob_SGD = sigmoid(Xtest, beta_SGD)
-    pred_SGD = (prob_SGD >= 0.5).astype(int)
+    prob_SGD = round(sigmoid(Xtest, beta_SGD))
+    # pred_SGD = (prob_SGD >= 0.5).astype(int)
 
     clf = LogisticRegression(solver='lbfgs')
     clf_fit = clf.fit(xtrain, np.ravel(ytrain))
