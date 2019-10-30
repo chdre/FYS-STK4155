@@ -1,60 +1,63 @@
+import numpy as np
+from main import data_import
+from sklearn.model_selection import train_test_split
+
+
 class NeuralNetwork:
     def __init__(
         self,
         x_data,
         y_data,
+        sizes,  # list of shape_x, nodes, shape_y
         eta=0.1,
-        n_neurons=50,  # Can be a list/array, each element => hidden layer
-        hidden_layers=len(n_hidden_neurons),
         epochs=10,
         batch_size=100,
     ):
-        self.x_data = x_data
-        self.y_data = y_data
+        self.x_data_full = x_data
+        self.y_data_full = y_data
 
-        self.n_inputs = x_data.shape[0]
-        self.n_features = x_data.shape[1]
-        self.hiddel_layers = hidden_layers
-        self.n_neurons = n_neurons
+        self.sizes = sizes
+        self.n_inputs = sizes[0]
+        self.n_features = sizes[-1]
+        self.layers = len(sizes)
+        self.n_neurons = sizes[1:-1]
 
         self.epochs = epochs
         self.batch_size = batch_size
-        self.iteration = self.n_inputs // self.batch_size
+        self.iterations = self.n_inputs // self.batch_size
         self.eta = eta
 
-        self.create_bias_weights()
+        self.create_bias_and_weights()
 
     def create_bias_and_weights(self):
-        self.biases = np.array([np.random.randn(y, 1) for y in n_neurons[1:]])
-        self.weights = np.array([np.random.randn(x, y)
-                                 for x, y in zip(n_neurons[:-1], n_neurons[1:])])
+        self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
+        self.weights = [np.random.randn(x, y) for x, y in zip(
+            self.sizes[:-1], self.sizes[1:])]
 
-    def feed_forward(self, x):
+    def feed_forward(self):
         """
         Performs a feed forward, storing activation and z
         """
         self.z = []
-        self.a = [x]
+        self.a = [self.x_data]
         self.probabilities = []
-        a_temp = x
+        a_temp = self.x_data
+
+        print("hererer")
 
         for b, w in zip(self.biases, self.weights):
+            print("here")
             _z = np.matmul(a_temp, w) + b
             self.z.append(_z)
             a_temp = sigmoid(_z)   # Updating
             self.a.append(a_temp)
 
+        print("hererr")
+
         # Softmax
-        exp_term = np.exp(z)    # Temporary to reduce FLOPS
+        exp_term = np.exp(self.z[-1])    # Temporary to reduce FLOPS
         self.probabilities = exp_term / \
             np.sum(exp_term, axis=1, keepdims=True)
-
-    def sgd(self, train_data):
-        "stochastic gradient descent"
-        for e in range(self.epochs):
-            np.random.shuffle(train_data)
-            mini_batches = [[train_data[i:i + self.batch_size]
-                             for i in range(n, self.batch_size)]]
 
     def backpropagation(self):
         """ backprop"""
@@ -65,10 +68,6 @@ class NeuralNetwork:
         self.weights_gradient = [np.zeros(w.shape) for w in self.weights]
         self.biases_gradient = [np.zeros(b.shape) for b in self.biases]
 
-        # for i in len(error_output):
-        #     self.weights_gradient.append()
-        #         np.matmul(self.activation[i].T, error_output[i]))
-        #     self.biases_gradient.append(np.sum(error_output[i], axis=0))
         "Check if error_hidden indices are correct"
         self.weights_gradient[-1] = np.matmul(error_out[-1], a[-2].T)
         self.biases_gradient[-1] = error_hidden[-1]
@@ -82,7 +81,46 @@ class NeuralNetwork:
         self.weights -= self.eta * self.weights_gradient
         self.bias -= self.eta * self.biases_gradient
 
+    def predict(self, x):
+        probabilites = self.feed_forward(x)
+        return
+
+    def train(self):
+        data_indices = np.arange(self.n_inputs)
+
+        for e in range(self.epochs):
+            for i in range(self.iterations):
+                chosen_datapoints = np.random.choice(
+                    data_indices, size=self.batch_size, replace=False
+                )
+
+                self.x_data = self.x_data_full[chosen_datapoints]
+                self.y_data = self.y_data_full[chosen_datapoints]
+
+                self.feed_forward()
+                self.backpropagation()
+
 
 def sigmoid(z):
     """ sigmoid =)))"""
     return 1 / (1 + np.exp(-z))
+
+
+def main():
+    x, y = data_import()
+
+    test_size_ = 0.3
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=test_size_)
+
+    _sizes = [len(x_train[:, 0]), 50, len(y_train)]
+
+    dnn = NeuralNetwork(x_train, y_train, sizes=_sizes)
+
+    dnn.train()
+
+    test_predict = dnn.predict(x_test)
+
+
+if __name__ == "__main__":
+    main()
