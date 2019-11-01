@@ -1,13 +1,16 @@
-from main import gradient_descent, accuracy
-from sklearn.datasets import make_classification, load_breast_cancer
+from logit import gradient_descent, accuracy
+from sklearn.datasets import make_classification, load_breast_cancer, load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
+
+
+from NeuralNetwork import *
 
 
 def random_dataset():
@@ -95,6 +98,101 @@ def breast_cancer(plot_corr=False):
     plot_confusion_matrix(ytest, pred_skl)
 
 
+def image_of_numbers():
+    def to_categorical_numpy(integer_vector):
+        n_inputs = len(integer_vector)
+        categories = np.max(integer_vector) + 1
+        onehot_vector = np.zeros((n_inputs, categories))
+        onehot_vector[range(n_inputs), integer_vector] = 1
+
+        return onehot_vector
+
+    # download MNIST dataset
+    dataset = load_digits()
+
+    # define inputs and labels
+    inputs = dataset.images
+    labels = dataset.target
+
+    n_inputs = len(inputs)
+    inputs = inputs.reshape(n_inputs, -1)
+
+    # one-liner from scikit-learn library
+    train_size = 0.7
+    test_size = 1 - train_size
+    X_train, X_test, Y_train, Y_test = train_test_split(inputs, labels,
+                                                        train_size=train_size,
+                                                        test_size=test_size)
+
+    Y_train_onehot, Y_test_onehot = to_categorical_numpy(
+        Y_train), to_categorical_numpy(Y_test)
+
+    epochs = 50
+    batch_size = 1000
+    hidden_neurons = 100
+    eta_vals = np.logspace(-7, -3, 9)
+    lmbda_vals = np.logspace(-5, 1, 9)
+    neurons = [50]  # np.linspace(50, 120, 10, dtype=int)
+
+    # store the models for later use
+    DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
+
+    # grid search
+    for neus in neurons:
+        layers = [len(X_train[0]), neus, len(Y_train_onehot[0])]
+        for i, eta in enumerate(eta_vals):
+            for j, lmbda in enumerate(lmbda_vals):
+                dnn = NeuralNetwork(X_train, Y_train_onehot, sizes=layers,
+                                    epochs=epochs, batch_size=batch_size, eta=eta,
+                                    lmbda=lmbda)
+
+                import time as tm
+                start = tm.time()
+                dnn.train()
+                end = tm.time()
+
+                test_predict = dnn.predict(X_test)
+
+                DNN_numpy[i][j] = dnn
+
+                print("Learning rate  = ", eta)
+                print("Lambda = ", lmbda)
+                print("Accuracy score on test set: ",
+                      accuracy_score(Y_test, test_predict))
+                print(f"Runtime = {end - start}")
+
+                print()
+
+        sns.set()
+
+        train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
+        test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
+
+        for i in range(len(eta_vals)):
+            for j in range(len(lmbda_vals)):
+                dnn = DNN_numpy[i][j]
+
+                train_pred = dnn.predict(X_train)
+                test_pred = dnn.predict(X_test)
+
+                train_accuracy[i][j] = accuracy_score(Y_train, train_pred)
+                test_accuracy[i][j] = accuracy_score(Y_test, test_pred)
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        sns.heatmap(train_accuracy, annot=True, ax=ax, cmap="viridis")
+        ax.set_title(f"Training Accuracy, neurons={neus}")
+        ax.set_ylabel("$\eta$")
+        ax.set_xlabel("$\lambda$")
+        plt.show()
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        sns.heatmap(test_accuracy, annot=True, ax=ax, cmap="viridis")
+        ax.set_title(f"Test Accuracy, neurons={neus}")
+        ax.set_ylabel("$\eta$")
+        ax.set_xlabel("$\lambda$")
+        plt.show()
+
+
 def plot_confusion_matrix(y, pred):
     conf_matrix = confusion_matrix(y, pred)
     sns.heatmap(pd.DataFrame(conf_matrix), annot=True, cmap="YlGnBu", fmt='g')
@@ -106,4 +204,5 @@ def plot_confusion_matrix(y, pred):
 
 if __name__ == "__main__":
     # random_dataset()
-    breast_cancer(plot_corr=False)
+    # breast_cancer(plot_corr=False)
+    image_of_numbers()
