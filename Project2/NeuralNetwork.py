@@ -49,47 +49,60 @@ class NeuralNetwork:
         Performs a feed forward, storing activation and z
         """
         # self.z = np.empty(len(self.b) + 1, dtype=np.ndarray)
-        self.a = np.empty(len(self.b) + 1, dtype=np.ndarray)
+        self.a = np.empty(self.layers, dtype=np.ndarray)
         self.a[0] = self.x_data
-        # self.z[0] = self.forward_activation(self.x_data) "sett activation på ny"
+
+        # self.forward_activation(self.x_data) "sett activation på ny"
+        # self.z[0] = 0
 
         for l in range(self.layers - 1):
             if l < self.layers - 1:
                 self.set_activation_function(l)
             # print(self.w[l].shape, self.a[l].shape, self.b[l].shape)
             # self.z[l] = np.matmul(self.a[l - 1], self.w[l]) + self.b[l]
-            z = np.matmul(self.a[l], self.w[l]) + self.b[l]
-            self.a[l + 1] = self.forward_activation(z)
-
-        self.probabilities = self.a[-1]
+            # self.z[l + 1] =
+            z = (self.a[l] @ self.w[l]) + self.b[l]
+            self.a[l + 1] = self.forward_activation(z)  # (self.z[l + 1])
 
     def backpropagation(self):
         """ backprop"""
-        error = np.empty(self.layers, dtype=np.ndarray)
-        self.w_grad = np.empty(len(self.w), dtype=np.ndarray)
-        self.b_grad = np.empty(len(self.b), dtype=np.ndarray)
+        delta = np.empty(self.layers - 1, dtype=np.ndarray)
+        self.w_grad = np.empty(self.layers - 1, dtype=np.ndarray)
+        self.b_grad = np.empty(self.layers - 1, dtype=np.ndarray)
 
-        error[-1] = self.probabilities - self.y_data
+        # Delta for output layer
+        delta[-1] = self.a[-1] - self.y_data
 
-        self.w_grad[-1] = np.matmul(self.a[-1].T, error[-1])
-        self.b_grad[-1] = np.sum(error[-1], axis=0)
+        # Gradients for output layer
+        self.w_grad[-1] = self.a[-2].T @ delta[-1]
+        self.b_grad[-1] = np.sum(delta[-1], axis=0)
 
-        for l in range(1, self.layers):
-            self.set_activation_function(-l)
-            """
-            HER SKAL DU SJEKKE LIKNINGER
-            """
-            error[-l - 1] = np.matmul(self.w[-l], error[-l]) * \
-                self.cost_derivative(self.a[-l])
+        for l in range(0, self.layers - 2):
+            # Calculating gradient for hidden layer(s)
+            self.set_activation_function(l)
+            # print(f"layer: {l}, a = {self.act_func}")
 
-            self.w_grad[-l] = np.matmul(error[-l], self.a[-l - 1])
-            self.b_grad[-l] = np.sum(error[-l], axis=0)
+            delta[l] = delta[l + 1] @ self.w[l + 1].T + self.cost_derivative(self.a[l + 1])
+            self.w_grad[l] = self.a[l].T @ delta[l]
+            self.b_grad[l] = np.sum(delta[l], axis=0)
 
-            if self.lmbda > 0:
-                self.w_grad[-l] += self.lmbda * self.w[-l]
+        for i in range(self.layers - 1):
+            self.w[i] -= self.eta * self.w_grad[i]
+            self.b[i] -= self.eta * self.b_grad[i]
 
-            self.w[-l] -= self.eta * self.w_grad[-l]
-            self.b[-l] -= self.eta * self.b_grad[-l]
+        # for l in range(1, self.layers - 1):
+        #     self.set_activation_function(-l)
+        #
+        #     delta[-l - 1] = (delta[-l] @ self.w[-l].T) * self.cost_derivative(self.a[-l])
+        #
+        #     self.w_grad[-l] = self.a[-l].T @ delta[-l - 1]
+        #     self.b_grad[-l] = np.sum(error[-l], axis=0)
+        #
+        #     if self.lmbda > 0:
+        #         self.w_grad[-l] += self.lmbda * self.w[-l]
+        #
+        #     self.w[-l] -= self.eta * self.w_grad[-l]
+        #     self.b[-l] -= self.eta * self.b_grad[-l]
 
     def forward_activation(self, z):
         if self.act_func == 'sigmoid':
