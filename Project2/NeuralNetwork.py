@@ -30,6 +30,7 @@ class NeuralNetwork:
         self.eta = eta
         self.lmbda = lmbda
         self.activation_func = activation_function
+        self.leaky_slope = leaky_slope
 
         self.create_bias_and_weights()
 
@@ -48,7 +49,7 @@ class NeuralNetwork:
         """
         Performs a feed forward, storing activation and z
         """
-        # self.z = np.empty(len(self.b) + 1, dtype=np.ndarray)
+        self.z = np.empty(self.layers, dtype=np.ndarray)
         self.a = np.empty(self.layers, dtype=np.ndarray)
         self.a[0] = self.x_data
 
@@ -60,9 +61,8 @@ class NeuralNetwork:
                 self.set_activation_function(l)
             # print(self.w[l].shape, self.a[l].shape, self.b[l].shape)
             # self.z[l] = np.matmul(self.a[l - 1], self.w[l]) + self.b[l]
-            # self.z[l + 1] =
-            z = (self.a[l] @ self.w[l]) + self.b[l]
-            self.a[l + 1] = self.forward_activation(z)  # (self.z[l + 1])
+            self.z[l + 1] = (self.a[l] @ self.w[l]) + self.b[l]
+            self.a[l + 1] = self.forward_activation(self.z[l + 1])
 
     def backpropagation(self):
         """ backprop"""
@@ -71,7 +71,7 @@ class NeuralNetwork:
         self.b_grad = np.empty(self.layers - 1, dtype=np.ndarray)
 
         # Delta for output layer
-        delta[-1] = self.a[-1] - self.y_data
+        delta[-1] = self.a[-1] - self.y_data    # Derivative of cost function 0.5*(p-y)^2
 
         # Gradients for output layer
         self.w_grad[-1] = self.a[-2].T @ delta[-1]
@@ -80,11 +80,17 @@ class NeuralNetwork:
         for l in range(0, self.layers - 2):
             # Calculating gradient for hidden layer(s)
             self.set_activation_function(l)
-            # print(f"layer: {l}, a = {self.act_func}")
 
-            delta[l] = delta[l + 1] @ self.w[l + 1].T + self.cost_derivative(self.a[l + 1])
+            delta[l] = (delta[l + 1] @ self.w[l + 1].T) * self.act_func_derivative(self.a[l + 1], self.z[l + 1])
             self.w_grad[l] = self.a[l].T @ delta[l]
             self.b_grad[l] = np.sum(delta[l], axis=0)
+
+        # for l in range(1, self.layers - 1):
+        #     self.set_activation_function(-l)
+        #
+        #     delta[-l - 1] = (delta[-l] @ self.w[-l].T) * self.act_func_derivative(self.a[-l])
+        #     self.w_grad[-l - 1] = self.a[-l - 1].T @ delta[-l - 1]
+        #     self.b_grad[-l - 1] = np.sum(delta[-l - 1], axis=0)
 
         for i in range(self.layers - 1):
             self.w[i] -= self.eta * self.w_grad[i]
@@ -119,13 +125,13 @@ class NeuralNetwork:
             exp_term = np.exp(z)
             return exp_term / np.sum(exp_term, axis=1, keepdims=True)
 
-    def cost_derivative(self, a):
+    def act_func_derivative(self, a, z):
         if self.act_func == 'sigmoid':
             return a * (1 - a)
         elif self.act_func == 'tanh':
             return 1 - np.square(a)
         elif self.act_func == 'relu':
-            return 1 * (a > 0)
+            return np.heaviside(z, z)
         elif self.act_func == 'leaky_relu':
             d = np.zeros_like(a)
             d[a <= 0] = self.leaky_slope
