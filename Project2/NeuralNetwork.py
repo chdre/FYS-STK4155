@@ -48,15 +48,18 @@ class NeuralNetwork:
         """
         Performs a feed forward, storing activation and z
         """
-        self.z = np.empty(len(self.b), dtype=np.ndarray)
+        # self.z = np.empty(len(self.b) + 1, dtype=np.ndarray)
         self.a = np.empty(len(self.b) + 1, dtype=np.ndarray)
         self.a[0] = self.x_data
+        # self.z[0] = self.forward_activation(self.x_data) "sett activation på ny"
 
-        for i in range(self.b.shape[0]):
-            self.set_activation_function(i)
-            z = np.matmul(self.a[i], self.w[i]) + self.b[i]
-            self.z[i] = z
-            self.a[i + 1] = self.forward_activation(z)
+        for l in range(self.layers - 1):
+            if l < self.layers - 1:
+                self.set_activation_function(l)
+            # print(self.w[l].shape, self.a[l].shape, self.b[l].shape)
+            # self.z[l] = np.matmul(self.a[l - 1], self.w[l]) + self.b[l]
+            z = np.matmul(self.a[l], self.w[l]) + self.b[l]
+            self.a[l + 1] = self.forward_activation(z)
 
         self.probabilities = self.a[-1]
 
@@ -73,10 +76,13 @@ class NeuralNetwork:
 
         for l in range(1, self.layers):
             self.set_activation_function(-l)
-            error[-l - 1] = np.matmul(error[-l], self.w[-l].T) * \
-                self.cost_derivative(self.a[-l - 1])
+            """
+            HER SKAL DU SJEKKE LIKNINGER
+            """
+            error[-l - 1] = np.matmul(self.w[-l], error[-l]) * \
+                self.cost_derivative(self.a[-l])
 
-            self.w_grad[-l] = np.matmul(self.a[-l - 1].T, error[-l])
+            self.w_grad[-l] = np.matmul(error[-l], self.a[-l - 1])
             self.b_grad[-l] = np.sum(error[-l], axis=0)
 
             if self.lmbda > 0:
@@ -85,19 +91,19 @@ class NeuralNetwork:
             self.w[-l] -= self.eta * self.w_grad[-l]
             self.b[-l] -= self.eta * self.b_grad[-l]
 
-    def forward_activation(self, x):
+    def forward_activation(self, z):
         if self.act_func == 'sigmoid':
             # print("sig")
-            return 1 / (1 + np.exp(-x))
+            return 1 / (1 + np.exp(-z))
         elif self.act_func == 'tanh':
-            return np.tanh(x)
+            return np.tanh(z)
         elif self.act_func == 'relu':
-            return np.maximum(0, x)
+            return np.maximum(0, z)
         elif self.act_func == 'leaky_relu':
-            return np.maximum(self.leaky_slope * x, x)
+            return np.maximum(self.leaky_slope * z, z)
         elif self.act_func == 'softmax':
             # print("soft")
-            exp_term = np.exp(x)
+            exp_term = np.exp(z)
             return exp_term / np.sum(exp_term, axis=1, keepdims=True)
 
     def cost_derivative(self, a):
