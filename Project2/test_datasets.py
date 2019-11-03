@@ -129,21 +129,22 @@ def image_of_numbers():
 
     epochs = 100
     batch_size = 100
-    hidden_neurons = 100
-    eta_vals = np.logspace(-5, 1, 9)
-    lmbda_vals = np.logspace(-5, 1, 9)
+    eta_vals = np.logspace(-7, 1, 9)
+    lmbda_vals = np.logspace(-7, 1, 9)
     neurons = [50]  # np.linspace(50, 120, 10, dtype=int)
-    activation_func = ['tanh', 'softmax']
+    activation_func = ['leaky_relu', 'softmax']
 
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
 
     # grid search
     for neus in neurons:
-        layers = [len(X_train[0]), neus, len(Y_train_onehot[0])]
+        layers = [X_train.shape[1], neus, Y_train_onehot.shape[1]]
+
         for i, eta in enumerate(eta_vals):
             for j, lmbda in enumerate(lmbda_vals):
                 dnn = NeuralNetwork(X_train, Y_train_onehot, sizes=layers,
+                                    activation_function=activation_func,
                                     epochs=epochs, batch_size=batch_size, eta=eta,
                                     lmbda=lmbda)
 

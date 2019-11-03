@@ -26,8 +26,8 @@ def credit_card():
     lmbda_vals = np.logspace(-5, 1, 7)
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
-    layers = [len(x_train[0]), 50, len(y_train_onehot[0])]
-    activation_func = 'sigmoid'
+    layers = [len(x_train[0]), 48, len(y_train_onehot[0])]
+    activation_func = ['sigmoid', 'softmax']
 
     # grid search
     for i, eta in enumerate(eta_vals):
@@ -84,5 +84,5 @@ def image():
 
 
 if __name__ == "__main__":
-    credit_card()
-    # image()
+    # credit_card()
+    image()
