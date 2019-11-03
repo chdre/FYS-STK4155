@@ -127,12 +127,12 @@ def image_of_numbers():
     Y_train_onehot, Y_test_onehot = to_categorical_numpy(
         Y_train), to_categorical_numpy(Y_test)
 
-    epochs = 500
-    batch_size = 100
+    epochs = 1500
+    batch_size = 200
     eta_vals = np.logspace(-7, 1, 9)
     lmbda_vals = np.logspace(-7, 1, 9)
-    neurons = [32]  # np.linspace(50, 120, 10, dtype=int)
-    activation_func = ['tanh', 'relu', 'softmax']
+    neurons = [50]  # np.linspace(50, 120, 10, dtype=int)
+    activation_func = ['relu', 'softmax']
 
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
