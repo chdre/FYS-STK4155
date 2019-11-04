@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 import matplotlib.pyplot as plt
 from NeuralNetwork import *
@@ -19,11 +20,17 @@ def credit_card():
     _, _, y_train_onehot, y_test_onehot = train_test_split(
         x, y, test_size=test_size_)
 
+    scale = StandardScaler()   # Scales by (func - mean)/std.dev
+    scale.fit(x_train)
+    x_train = scale.transform(x_train)
+    x_test = scale.transform(x_test)
+
     epochs = 20
     batch_size = 2000
     hidden_neurons = 100
-    eta_vals = np.logspace(-5, 1, 7)
-    lmbda_vals = np.logspace(-5, 1, 7)
+    eta_vals = np.logspace(-7, 1, 7)
+    lmbda_vals = np.logspace(-7, 1, 7)
+    lmbda_vals[0] = 0
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
     layers = [len(x_train[0]), 48, len(y_train_onehot[0])]
@@ -84,5 +91,5 @@ def image():
 
 
 if __name__ == "__main__":
-    # credit_card()
-    image()
+    credit_card()
+    # image()

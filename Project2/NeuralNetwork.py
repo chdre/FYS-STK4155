@@ -39,30 +39,16 @@ class NeuralNetwork:
         self.w = np.asarray([np.random.randn(x, y) for x, y in zip(
             self.sizes[:-1], self.sizes[1:])])
 
-    def set_activation_function(self, i):
-        if isinstance(self.activation_func, (list, tuple, np.ndarray)):
-            self.act_func = self.activation_func[i]
-        elif isinstance(self.activation_func, str):
-            self.act_func = self.activation_func
-
     def feed_forward(self):
         """
         Performs a feed forward, storing activation and z
         """
-        self.z = np.empty(self.layers, dtype=np.ndarray)
         self.a = np.empty(self.layers, dtype=np.ndarray)
         self.a[0] = self.x_data
 
-        # self.forward_activation(self.x_data) "sett activation på ny"
-        # self.z[0] = 0
-
         for l in range(self.layers - 1):
-            if l < self.layers - 1:
-                self.set_activation_function(l)
-            # print(self.w[l].shape, self.a[l].shape, self.b[l].shape)
-            # self.z[l] = np.matmul(self.a[l - 1], self.w[l]) + self.b[l]
-            self.z[l + 1] = (self.a[l] @ self.w[l]) + self.b[l]
-            self.a[l + 1] = self.forward_activation(self.z[l + 1])
+            z = (self.a[l] @ self.w[l]) + self.b[l]
+            self.a[l + 1] = self.forward_activation(z, l)
 
     def backpropagation(self):
         """ backprop"""
@@ -71,48 +57,30 @@ class NeuralNetwork:
         self.b_grad = np.empty(self.layers - 1, dtype=np.ndarray)
 
         # Delta for output layer
-        delta[-1] = self.a[-1] - self.y_data    # Derivative of cost function 0.5*(p-y)^2
+        delta_old = (self.a[-1] - self.y_data)
 
         # Gradients for output layer
-        self.w_grad[-1] = self.a[-2].T @ delta[-1]
-        self.b_grad[-1] = np.sum(delta[-1], axis=0)
+        self.w_grad[-1] = self.a[-2].T @ delta_old
+        self.b_grad[-1] = np.sum(delta_old, axis=0)
 
-        for l in range(0, self.layers - 2):
-            # Calculating gradient for hidden layer(s)
-            self.set_activation_function(l)
+        for l in range(self.layers - 2, 0, -1):
+            delta = (delta_old @ self.w[l].T) * self.act_func_derivative(self.a[l], l - 1)
+            self.w_grad[l - 1] = self.a[l - 1].T @ delta
+            self.b_grad[l - 1] = np.sum(delta, axis=0)
 
-            delta[l] = (delta[l + 1] @ self.w[l + 1].T) * self.act_func_derivative(self.a[l + 1], self.z[l + 1])
-            self.w_grad[l] = self.a[l].T @ delta[l]
-            self.b_grad[l] = np.sum(delta[l], axis=0)
+            if self.lmbda > 0:
+                self.w_grad[l] += self.lmbda * self.w[l]
 
-        # for l in range(1, self.layers - 1):
-        #     self.set_activation_function(-l)
-        #
-        #     delta[-l - 1] = (delta[-l] @ self.w[-l].T) * self.act_func_derivative(self.a[-l])
-        #     self.w_grad[-l - 1] = self.a[-l - 1].T @ delta[-l - 1]
-        #     self.b_grad[-l - 1] = np.sum(delta[-l - 1], axis=0)
+            delta_old = delta
 
         for i in range(self.layers - 1):
             self.w[i] -= self.eta * self.w_grad[i]
             self.b[i] -= self.eta * self.b_grad[i]
 
-        # for l in range(1, self.layers - 1):
-        #     self.set_activation_function(-l)
-        #
-        #     delta[-l - 1] = (delta[-l] @ self.w[-l].T) * self.cost_derivative(self.a[-l])
-        #
-        #     self.w_grad[-l] = self.a[-l].T @ delta[-l - 1]
-        #     self.b_grad[-l] = np.sum(error[-l], axis=0)
-        #
-        #     if self.lmbda > 0:
-        #         self.w_grad[-l] += self.lmbda * self.w[-l]
-        #
-        #     self.w[-l] -= self.eta * self.w_grad[-l]
-        #     self.b[-l] -= self.eta * self.b_grad[-l]
+    def forward_activation(self, z, index):
+        self.act_func = self.activation_func[index]
 
-    def forward_activation(self, z):
         if self.act_func == 'sigmoid':
-            # print("sig")
             return 1 / (1 + np.exp(-z))
         elif self.act_func == 'tanh':
             return np.tanh(z)
@@ -121,40 +89,35 @@ class NeuralNetwork:
         elif self.act_func == 'leaky_relu':
             return np.maximum(self.leaky_slope * z, z)
         elif self.act_func == 'softmax':
-            # print("soft")
             exp_term = np.exp(z)
             return exp_term / np.sum(exp_term, axis=1, keepdims=True)
 
-    def act_func_derivative(self, a, z):
+    def act_func_derivative(self, a, index):
+        self.act_func = self.activation_func[index]
+
         if self.act_func == 'sigmoid':
             return a * (1 - a)
         elif self.act_func == 'tanh':
             return 1 - np.square(a)
         elif self.act_func == 'relu':
-            return np.heaviside(z, z)
+            return np.heaviside(a, 0)
         elif self.act_func == 'leaky_relu':
             d = np.zeros_like(a)
             d[a <= 0] = self.leaky_slope
             d[a > 0] = 1
             return d
-        elif self.act_func == 'softmax':
-            return a
 
     def predict(self, x):
-        z = np.empty(len(self.b), dtype=np.ndarray)
-        a = np.empty(len(self.b) + 1, dtype=np.ndarray)
+        a = np.empty(self.layers, dtype=np.ndarray)
         a[0] = x
 
-        for i in range(len(self.b)):
-            self.set_activation_function(i)
-            _z = np.matmul(a[i], self.w[i]) + self.b[i]
-            z[i] = _z
-            a[i + 1] = self.forward_activation(_z)
+        for l in range(self.layers - 1):
+            _z = (a[l] @ self.w[l]) + self.b[l]
+            a[l + 1] = self.forward_activation(_z, l)
 
-        exp_term = np.exp(z[-1])
-        probabilities = np.argmax(
-            exp_term / np.sum(exp_term, axis=1, keepdims=True), axis=1)
-        return probabilities
+        probability = np.argmax(a[-1], axis=1)
+
+        return probability
 
     def train(self):
         data_indices = np.arange(self.n_inputs)
@@ -169,9 +132,3 @@ class NeuralNetwork:
 
                 self.feed_forward()
                 self.backpropagation()
-
-
-def softmax(z):
-    "softmax"
-    exp_term = np.exp(z)
-    return exp_term / np.sum(exp_term, axis=1, keepdims=True)

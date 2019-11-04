@@ -127,72 +127,75 @@ def image_of_numbers():
     Y_train_onehot, Y_test_onehot = to_categorical_numpy(
         Y_train), to_categorical_numpy(Y_test)
 
-    epochs = 1500
-    batch_size = 200
-    eta_vals = np.logspace(-7, 1, 9)
-    lmbda_vals = np.logspace(-7, 1, 9)
-    neurons = [50]  # np.linspace(50, 120, 10, dtype=int)
-    activation_func = ['relu', 'softmax']
+    # Scaling
+    scale = StandardScaler()   # Scales by (func - mean)/std.dev
+    X_train = X_train / np.max(X_train)  # scale.fit_transform(X_train)
+    X_test = X_test / np.max(X_test)  # scale.transform(X_test)
+
+    epochs = 500
+    batch_size = 100
+    eta_vals = np.logspace(0, -6, 5)
+    lmbda_vals = np.logspace(1, -2, 7)
+    lmbda_vals[0] = 0
+    activation_func = ['sigmoid', 'softmax']
 
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
 
     # grid search
-    for neus in neurons:
-        layers = [X_train.shape[1], neus, Y_train_onehot.shape[1]]
+    layers = [X_train.shape[1], 50, Y_train_onehot.shape[1]]
 
-        for i, eta in enumerate(eta_vals):
-            for j, lmbda in enumerate(lmbda_vals):
-                dnn = NeuralNetwork(X_train, Y_train_onehot, sizes=layers,
-                                    activation_function=activation_func,
-                                    epochs=epochs, batch_size=batch_size, eta=eta,
-                                    lmbda=lmbda)
+    for i, eta in enumerate(eta_vals):
+        for j, lmbda in enumerate(lmbda_vals):
+            dnn = NeuralNetwork(X_train, Y_train_onehot, sizes=layers,
+                                activation_function=activation_func,
+                                epochs=epochs, batch_size=batch_size, eta=eta,
+                                lmbda=lmbda)
 
-                import time as tm
-                start = tm.time()
-                dnn.train()
-                end = tm.time()
+            import time as tm
+            start = tm.time()
+            dnn.train()
+            end = tm.time()
 
-                test_predict = dnn.predict(X_test)
+            test_predict = dnn.predict(X_test)
 
-                DNN_numpy[i][j] = dnn
+            DNN_numpy[i][j] = dnn
 
-                print("Learning rate  = ", eta)
-                print("Lambda = ", lmbda)
-                print("Accuracy score on test set: ",
-                      accuracy_score(Y_test, test_predict))
-                print(f"Runtime = {end - start}")
+            print("Learning rate  = ", eta)
+            print("Lambda = ", lmbda)
+            print("Accuracy score on test set: ",
+                  accuracy_score(Y_test, test_predict))
+            print(f"Runtime = {end - start}")
+            print()
 
-                print()
+    sns.set()
 
-        sns.set()
+    train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
+    test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
 
-        train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
-        test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
+    for i in range(len(eta_vals)):
+        for j in range(len(lmbda_vals)):
+            dnn = DNN_numpy[i][j]
 
-        for i in range(len(eta_vals)):
-            for j in range(len(lmbda_vals)):
-                dnn = DNN_numpy[i][j]
+            train_pred = dnn.predict(X_train)
+            test_pred = dnn.predict(X_test)
 
-                train_pred = dnn.predict(X_train)
-                test_pred = dnn.predict(X_test)
+            train_accuracy[i][j] = accuracy_score(Y_train, train_pred)
+            test_accuracy[i][j] = accuracy_score(Y_test, test_pred)
 
-                train_accuracy[i][j] = accuracy_score(Y_train, train_pred)
-                test_accuracy[i][j] = accuracy_score(Y_test, test_pred)
+    fig, ax = plt.subplots(figsize=(10, 10))
+    sns.heatmap(train_accuracy, annot=True, ax=ax, cmap="viridis")
+    ax.set_title(f"Training Accuracy")
+    ax.set_ylabel("$\eta$")
+    ax.set_xlabel("$\lambda$")
+    plt.show()
 
-        fig, ax = plt.subplots(figsize=(10, 10))
-        sns.heatmap(train_accuracy, annot=True, ax=ax, cmap="viridis")
-        ax.set_title(f"Training Accuracy, neurons={neus}")
-        ax.set_ylabel("$\eta$")
-        ax.set_xlabel("$\lambda$")
-        plt.show()
-
-        fig, ax = plt.subplots(figsize=(10, 10))
-        sns.heatmap(test_accuracy, annot=True, ax=ax, cmap="viridis")
-        ax.set_title(f"Test Accuracy, neurons={neus}")
-        ax.set_ylabel("$\eta$")
-        ax.set_xlabel("$\lambda$")
-        plt.show()
+    fig, ax = plt.subplots(figsize=(10, 10))
+    sns.heatmap(test_accuracy, annot=True, ax=ax, cmap="viridis")
+    ax.set_title(f"Test Accuracy")
+    ax.set_ylabel("$\eta$")
+    ax.set_xlabel("$\lambda$")
+    plt.show()
 
 
 def plot_confusion_matrix(y, pred):
