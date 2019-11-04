@@ -1,10 +1,12 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 import matplotlib.pyplot as plt
 from NeuralNetwork import *
+
+np.random.seed(42)
 
 
 def credit_card():
@@ -90,6 +92,64 @@ def image():
     image_of_numbers()
 
 
+def Franke_function(x, y):
+    t1 = 0.75 * np.exp(-((9 * x - 2)**2) / 4 - ((9 * y - 2)**2) / 4)
+    t2 = 0.75 * np.exp(-((9 * x + 1)**2) / 49 - ((9 * y + 1)**2) / 10)
+    t3 = 0.5 * np.exp(-((9 * x - 7)**2) / 4 - ((9 * y - 3)**2) / 4)
+    t4 = -0.2 * np.exp(-(9 * x - 4)**2 - (9 * y - 7)**2)
+
+    f = t1 + t2 + t3 + t4
+
+    return f
+
+
+def Franke_for_NN():
+    n = 50
+    x = np.sort(np.random.rand(n))
+    y = np.sort(np.random.rand(n))
+    X = np.zeros((n * n, 2))
+    Y = np.zeros((n * n, 1))
+
+    eps = np.random.normal(0, 0.01, (n, n))  # Noise
+
+    for i in range(n):
+        for j in range(n):
+            X[n * i + j] = [x[i], y[j]]
+            Y[n * i + j] = Franke_function(x[i], y[j]) + eps[i, j]
+
+    train_size_ = 0.8
+    test_size_ = 1 - train_size_
+
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, train_size=train_size_, test_size=test_size_)
+
+    scale = StandardScaler()
+    scale.fit(X_train)
+    X_train = scale.transform(X_train)
+    X_test = scale.transform(X_test)
+    scale.fit(Y_train)
+    Y_train = scale.transform(Y_train)
+    Y_test = scale.transform(Y_test)
+
+    layers = [X_train.shape[1], 50, Y_train.shape[1]]
+
+    nn = NeuralNetwork(X_train, Y_train, layers,
+                       activation_function=['sigmoid', 'sigmoid'])
+
+    nn.train()
+
+    pred_test = nn.predict(X_test)
+
+    # print("Learning rate  = ", eta)
+    # print("Lambda = ", lmbda)
+    r2score = r2_score(Y_test, pred_test)
+    mse = mean_squared_error(Y_test, pred_test)
+
+    print(f"R2 score = {r2_score}")
+    print(f"MSE = {mse}")
+
+
 if __name__ == "__main__":
-    credit_card()
+    # credit_card()
     # image()
+    Franke_for_NN()
