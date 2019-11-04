@@ -135,8 +135,8 @@ def image_of_numbers():
     epochs = 500
     batch_size = 100
     eta_vals = np.logspace(0, -6, 5)
-    lmbda_vals = np.logspace(1, -2, 7)
-    lmbda_vals[0] = 0
+    lmbda_vals = np.logspace(1, -4, 7)
+    lmbda_vals[-1] = 0
     activation_func = ['sigmoid', 'softmax']
 
     # store the models for later use
