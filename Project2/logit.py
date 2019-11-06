@@ -18,7 +18,7 @@ np.random.seed(42)
 def learning_schedule(t, t0=5, t1=50): return t0 / (t + t1)
 
 
-def sigmoid(x, beta): return 1 / (1 + np.exp(-x @ beta))
+def sigmoid(z): return 1 / (1 + np.exp(-z))
 
 
 def data_import(plot_corr=False):
@@ -63,8 +63,6 @@ def data_import(plot_corr=False):
         remainder="passthrough"
     ).fit_transform(x)
 
-    y_onehot = onehotencoder.fit_transform(y)
-
     if plot_corr:
         df_scaled = df - df.mean()
         corr = df_scaled.corr()
@@ -74,36 +72,56 @@ def data_import(plot_corr=False):
         plt.yticks(rotation=360)
         plt.show()
 
-    return x, y_onehot, y
+    return x, y
 
 
 def gradient_descent(X, y, beta,
                      eps=1e-15, n=10000, eta=1e-6,
-                     stochastic=False, n_epochs=100, m=500):  # stochastic GD
+                     stochastic=False, epochs=100, batch_size=100):  # stochastic GD
     """gradient descent"""
-    beta_old = beta + 1  # Initial value for while loop
+    beta_old = beta  # + 1  # Initial value for while loop
 
     if stochastic:
-        for epoch in range(n_epochs):
+        data_indices = np.arange(X.shape[0])    # Samples
+        for epoch in range(epochs):
             iter = 0
-            while np.abs(np.sum(beta - beta_old)) < eps or iter < m:
-                rand_idx = np.random.randint(int(len(X[0])))
-                xi = X[rand_idx:rand_idx + 1]  # Matrix
-                yi = y[rand_idx:rand_idx + 1]  # Array
+            for i in range(X.shape[0]):
+                chosen_datapoints = np.random.choice(
+                    data_indices, size=batch_size, replace=False)
 
-                gradient = xi.T @ (sigmoid(xi, beta) - yi)
+                X_sub = X[chosen_datapoints]
+                y_sub = y[chosen_datapoints]
 
-                eta = learning_schedule(epoch * m + iter)
-                beta_new = beta - eta * gradient
+                gradient = X_sub.T @ (sigmoid(X_sub @ beta_old) - y_sub)
 
-                beta_old = beta
-                beta = beta_new
+                eta = learning_schedule(epoch * X.shape[0] / batch_size + iter)
+
+                beta_new = beta_old - eta * gradient
+
+                beta_new = beta_old
 
                 iter += 1
 
+            # while np.abs(np.sum(beta - beta_old)) < eps or iter < m:
+            #     rand_idx = np.random.randint(int(len(X[0])))
+            #     xi = X[rand_idx:rand_idx + 1]  # Matrix
+            #     yi = y[rand_idx:rand_idx + 1]  # Array
+            #     print(xi.shape, (xi@beta).shape, yi.shape, beta.shape)
+            #     exit()
+            #
+            #     gradient = xi.T @ (sigmoid(xi, beta) - yi)
+            #
+            #     eta = learning_schedule(epoch * m + iter)
+            #     beta_new = beta - eta * gradient
+            #
+            #     beta_old = beta
+            #     beta = beta_new
+            #
+            #     iter += 1
+
     if not stochastic:
         for i in range(n):
-            gradient = X.T @ (sigmoid(X, beta) - y)
+            gradient = X.T @ (sigmoid(X @ beta) - y)
             beta_new = beta - eta * gradient
 
             if abs(np.sum(beta - beta_new)) < eps:
@@ -131,7 +149,10 @@ def main():
     """ main """
     x, y = data_import()
 
-    xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2)
+    tesize = 0.3
+    trsize = 1 - tesize
+    xtrain, xtest, ytrain, ytest = train_test_split(
+        x, y, train_size=trsize, test_size=tesize)
 
     # Scaling
     scale = StandardScaler()   # Scales by (func - mean)/std.dev
@@ -142,24 +163,23 @@ def main():
     Xtrain = np.c_[np.array([1] * len(xtrain[:, 0])), xtrain]
     Xtest = np.c_[np.array([1] * len(xtest[:, 0])), xtest]
 
-    beta_init = np.random.randn(len(Xtrain[0]), 1)
+    beta_init = np.random.randn(Xtrain.shape[1], 1)
 
-    beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=10000)
-    prob_GD = round(sigmoid(Xtest, beta_GD))
+    beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=100)
+    pred_GD = np.round(sigmoid(Xtest @ beta_GD))
     # pred_GD = (prob_GD >= 0.5).astype(int)
 
     beta_SGD = gradient_descent(
-        Xtrain, ytrain, beta_init, m=300, stochastic=True)
-    prob_SGD = round(sigmoid(Xtest, beta_SGD))
-    # pred_SGD = (prob_SGD >= 0.5).astype(int)
+        Xtrain, ytrain, beta_init, epochs=10, batch_size=200, stochastic=True)
+    pred_SGD = np.round(sigmoid(Xtest @ beta_SGD))
 
     clf = LogisticRegression(solver='lbfgs')
-    clf_fit = clf.fit(xtrain, np.ravel(ytrain))
-    pred_skl = xtest @ clf_fit.coef_.T
+    clf_fit = clf.fit(Xtrain, ytrain.ravel())
+    pred_skl = Xtest @ clf_fit.coef_.T
 
     print(f"Accuracy score for own GD: {accuracy(pred_GD, ytest)}")
     print(f"Accuracy score for own SGD: {accuracy(pred_SGD, ytest)}")
-    print(f"Accuracy score scikit-learn: {clf.score(xtest, ytest)}")
+    print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
 
     plot_confusion_matrix(ytest, pred_GD)
     plot_confusion_matrix(ytest, pred_SGD)
