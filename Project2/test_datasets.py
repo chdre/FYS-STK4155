@@ -137,7 +137,7 @@ def image_of_numbers():
     eta_vals = np.logspace(0, -6, 5)
     lmbda_vals = np.logspace(1, -4, 7)
     lmbda_vals[-1] = 0
-    activation_func = ['sigmoid', 'softmax']
+    activation_func = ['sigmoid', 'sigmoid']
 
     # store the models for later use
     DNN_numpy = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
