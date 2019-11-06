@@ -44,6 +44,7 @@ class NeuralNetwork:
         """
         Performs a feed forward, storing activation and z
         """
+
         self.a = np.empty(self.layers, dtype=np.ndarray)
         self.a[0] = self.x_data
 
@@ -53,10 +54,9 @@ class NeuralNetwork:
 
     def cost_function(self):
         if not self.cost_func == 'regression':
-            return self.a[-1] - self.y_data
+            return self.act_func_derivative(self.a[-1], -1) * (self.a[-1] - self.y_data)
         else:
-            return (self.a[-1] - self.y_data) \
-                * act_func_derivative(self.a[-1], -1)
+            return (self.a[-1] - self.y_data)
 
     def backpropagation(self):
         """ backprop"""
@@ -99,6 +99,8 @@ class NeuralNetwork:
         elif self.act_func == 'softmax':
             exp_term = np.exp(z)
             return exp_term / np.sum(exp_term, axis=1, keepdims=True)
+        elif self.act_func == 'nothing':
+            return z
 
     def act_func_derivative(self, a, index):
         self.act_func = self.activation_func[index]
@@ -115,14 +117,27 @@ class NeuralNetwork:
             return d
 
     def predict(self, x):
+        # if not self.cost_func == 'regression':
         a = np.empty(self.layers, dtype=np.ndarray)
+        # self.a[0] = x
+        #
+        # self.feed_forward()
+        # probability = np.round(self.a[-1])
+        #
+        # return probability
+        #
+        # else:
+        # a = np.empty(self.layers, dtype=np.ndarray)
         a[0] = x
 
         for l in range(self.layers - 1):
-            _z = (a[l] @ self.w[l]) + self.b[l]
-            a[l + 1] = self.forward_activation(_z, l)
+            z = (a[l] @ self.w[l]) + self.b[l]
+            a[l + 1] = self.forward_activation(z, l)
 
-        probability = np.argmax(a[-1], axis=1)
+        if self.cost_function == 'regression':
+            probability = a[-1]
+        else:
+            probability = np.round(a[-1])
 
         return probability
 
