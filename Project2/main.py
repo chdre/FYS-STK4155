@@ -1,38 +1,18 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_squared_error, r2_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, mean_squared_error, r2_score,\
+    roc_auc_score
 from sklearn.preprocessing import StandardScaler
 import scikitplot as skplt
 import seaborn as sns
 import matplotlib.pyplot as plt
-from NeuralNetwork import *
+from NeuralNetwork import NeuralNetwork
+from functions import *
 
 np.random.seed(42)
 
 
-def plot_heatmap(matrix, title):
-    fig, ax = plt.subplots(figsize=(10, 10))
-    sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis")
-    ax.set_title(title)
-    ax.set_ylabel("$\eta$")
-    ax.set_xlabel("$\lambda$")
-    plt.show()
-
-
-def scale_data(train, test, method):
-    """
-    Scales train and test data by method. E.g. method = StandardScaler from
-    sklearn. Returns scaled data.
-    """
-    scale = method()
-    scale.fit(train)
-    train = scale.transform(train)
-    test = scale.transform(test)
-
-    return train, test
-
-
-def credit_card():
+def neural_network_credit_card_data():
     from logit import data_import
 
     x, y = data_import()
@@ -43,26 +23,22 @@ def credit_card():
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, train_size=train_size_, test_size=test_size_)
 
-    # scale = StandardScaler()   # Scales by (func - mean)/std.dev
-    # scale.fit(x_train)
-    # x_train = scale.transform(x_train)
-    # x_test = scale.transform(x_test)
-
     x_train, x_test = scale_data(x_train, x_test, StandardScaler)
 
-    epochs = 3
-    batch_size = 100
-    eta_vals = np.logspace(1, -7, 7)
+    epochs = 50
+    batch_size = 500
+    eta_vals = np.logspace(0, -7, 7)
     lmbda_vals = np.logspace(0, -7, 7)
     lmbda_vals[0] = 0
 
-    layers = [x_train.shape[1], 100, y_train.shape[1]]
-    activation_func = ['sigmoid', 'sigmoid']
+    layers = [x_train.shape[1], 100, 10, y_train.shape[1]]
+    activation_func = ['tanh', 'tanh', 'tanh']
     if not len(layers) - 1 == len(activation_func):
         print('Add more activations functions')
         exit()
 
     train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
+    test_accuracy_manual = np.zeros((len(eta_vals), len(lmbda_vals)))
     test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
     aucscore = np.zeros((len(eta_vals), len(lmbda_vals)))
 
@@ -79,6 +55,7 @@ def credit_card():
             test_pred = nn.predict(x_test)
 
             train_accuracy[i, j] = accuracy_score(y_train, train_pred)
+            test_accuracy_manual[i, j] = accuracy(y_test, test_pred)
             test_accuracy[i, j] = accuracy_score(y_test, test_pred)
             aucscore[i, j] = roc_auc_score(y_test, test_pred)
 
@@ -174,6 +151,47 @@ def Franke_for_NN():
     plt.show()
     plot_heatmap(r2score, 'R2 score')
     plot_heatmap(mse, 'Mean squared error')
+
+
+def logistic_regression_credit_card_data():
+    """ main """
+    x, y = data_import()
+
+    test_size = 0.3
+    train_size = 1 - test_size
+    xtrain, xtest, ytrain, ytest = train_test_split(
+        x, y, train_size=train_size, test_size=test_size)
+
+    # Scaling
+    scale = StandardScaler()   # Scales by (func - mean)/std.dev
+    scale.fit(xtrain)
+    xtrain = scale.transform(xtrain)
+    xtest = scale.transform(xtest)
+
+    Xtrain = np.c_[np.array([1] * len(xtrain[:, 0])), xtrain]
+    Xtest = np.c_[np.array([1] * len(xtest[:, 0])), xtest]
+
+    beta_init = np.random.randn(Xtrain.shape[1], 1)
+
+    beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=1)
+    pred_GD = np.round(sigmoid(Xtest @ beta_GD))
+    # pred_GD = (prob_GD >= 0.5).astype(int)
+
+    beta_SGD = gradient_descent(
+        Xtrain, ytrain, beta_init, epochs=50, batch_size=500, stochastic=True)
+    pred_SGD = np.round(sigmoid(Xtest @ beta_SGD))
+
+    # clf = LogisticRegression(solver='lbfgs')
+    # clf_fit = clf.fit(Xtrain, ytrain.ravel())
+    # pred_skl = Xtest @ clf_fit.coef_.T
+
+    print(f"Accuracy score for own GD: {accuracy(pred_GD, ytest)}")
+    print(f"Accuracy score for own SGD: {accuracy(pred_SGD, ytest)}")
+    print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
+
+    plot_confusion_matrix(ytest, pred_GD)
+    plot_confusion_matrix(ytest, pred_SGD)
+    plot_confusion_matrix(ytest, pred_skl)
 
 
 if __name__ == "__main__":

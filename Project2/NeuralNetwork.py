@@ -1,7 +1,5 @@
 import numpy as np
 
-np.random.seed(42)
-
 
 class NeuralNetwork:
     def __init__(
@@ -9,11 +7,11 @@ class NeuralNetwork:
             x_data,
             y_data,
             sizes,  # list of shape_x, nodes, shape_y
-            activation_function=['sigmoid', 'softmax'],
+            activation_function,
             leaky_slope=0.1,
             cost_function='notregression',
             eta=0.1,
-            lmbda=0,
+            lmbda=0.01,
             epochs=10,
             batch_size=100):
         self.x_data_full = x_data
@@ -42,7 +40,7 @@ class NeuralNetwork:
 
     def feed_forward(self):
         """
-        Performs a feed forward, storing activation and z
+        Performs a feed forward, storing activation
         """
 
         self.a = np.empty(self.layers, dtype=np.ndarray)
