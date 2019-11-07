@@ -3,7 +3,7 @@ import seaborn as sns
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import confusion_matrix
 
@@ -26,13 +26,12 @@ def plot_confusion_matrix(y, pred):
     plt.show()
 
 
-def scale_data(train, test, method):
+def scale_data(x, y, method):
     scale = method()
-    scale.fit(train)
-    train = scale.transform(train)
-    test = scale.transform(test)
-
-    return train, test
+    scale.fit(x)
+    x = scale.transform(x)
+    y = scale.transform(y)
+    return x, y
 
 
 def learning_schedule(t, t0=5, t1=50):
@@ -41,6 +40,17 @@ def learning_schedule(t, t0=5, t1=50):
 
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
+
+
+def Franke_function(x, y):
+    t1 = 0.75 * np.exp(-((9 * x - 2)**2) / 4 - ((9 * y - 2)**2) / 4)
+    t2 = 0.75 * np.exp(-((9 * x + 1)**2) / 49 - ((9 * y + 1)**2) / 10)
+    t3 = 0.5 * np.exp(-((9 * x - 7)**2) / 4 - ((9 * y - 3)**2) / 4)
+    t4 = -0.2 * np.exp(-(9 * x - 4)**2 - (9 * y - 7)**2)
+
+    f = t1 + t2 + t3 + t4
+
+    return f
 
 
 def credit_card_data_import(plot_corr=False):
@@ -78,6 +88,9 @@ def credit_card_data_import(plot_corr=False):
     x = df.loc[:, df.columns != 'DefaultPaymentNextMonth'].values
     y = df.loc[:, df.columns == 'DefaultPaymentNextMonth'].values
 
+    # Scaling x (second argument)
+    x, _ = scale_data(x, x, StandardScaler)
+
     # Categorical variables to one-hot's
     onehotencoder = OneHotEncoder(categories="auto", sparse=False)
 
@@ -85,6 +98,8 @@ def credit_card_data_import(plot_corr=False):
         [("", onehotencoder, [1, 2, 3, 5, 6, 7, 8, 9, 10])],
         remainder="passthrough"
     ).fit_transform(x)
+
+    y_onehot = onehotencoder.fit_transform(y)
 
     if plot_corr:
         df_scaled = df - df.mean()
@@ -95,7 +110,7 @@ def credit_card_data_import(plot_corr=False):
         plt.yticks(rotation=360)
         plt.show()
 
-    return x, y
+    return x, y, y_onehot
 
 
 def gradient_descent(X, y, beta, eps=1e-15, n=10000, eta=1e-6):
@@ -159,13 +174,10 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, batch_size=100
         #     beta = beta_new
         #
         #     iter += 1
+    return beta
 
 
 def accuracy(y_tilde, y):
     """ returns accruacy"""
     I = np.mean(y_tilde == y)
     return I
-
-
-if __name__ == '__main__':
-    main()
