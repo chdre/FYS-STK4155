@@ -8,10 +8,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import confusion_matrix
 
 
-def plot_heatmap(matrix, title):
+def plot_heatmap(matrix, xtick, ytick):
     fig, ax = plt.subplots(figsize=(10, 10))
-    sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis")
-    ax.set_title(title)
+    sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis",
+                xticklabels=xtick, yticklabels=ytick)
     ax.set_ylabel("$\eta$")
     ax.set_xlabel("$\lambda$")
     plt.show()
@@ -113,20 +113,19 @@ def credit_card_data_import(plot_corr=False):
     return x, y, y_onehot
 
 
-def gradient_descent(X, y, beta, eps=1e-15, n=10000, eta=1e-6):
+def gradient_descent(X, y, beta, eps=1e-6, n=10000, eta=1e-6):
     """gradient descent"""
-    beta_old = beta  # + 1  # Initial value for while loop
+    beta_old = beta
 
     for i in range(n):
         gradient = X.T @ (sigmoid(X @ beta) - y)
-        beta_new = beta - eta * gradient
+        beta -= eta * gradient
 
-        if abs(np.sum(beta - beta_new)) < eps:
+        if abs(np.sum(beta_old - beta)) < eps:
             print(f"Converged for i={i}")
-            return beta_new
+            return beta
 
         beta_old = beta
-        beta = beta_new
 
     return beta
 
@@ -135,8 +134,6 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, batch_size=100
     """
     Stochastic gradient descent
     """
-    beta_old = beta  # + 1  # Initial value for while loop
-
     data_indices = np.arange(X.shape[0])    # Samples
     for epoch in range(epochs):
         iter = 0
@@ -148,13 +145,11 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, batch_size=100
             X_sub = X[chosen_datapoints]
             y_sub = y[chosen_datapoints]
 
-            gradient = X_sub.T @ (sigmoid(X_sub @ beta_old) - y_sub)
+            gradient = X_sub.T @ (sigmoid(X_sub @ beta) - y_sub)
 
             eta = learning_schedule(epoch * X.shape[0] / batch_size + iter)
 
-            beta_new = beta_old - eta * gradient
-
-            beta_new = beta_old
+            beta -= eta * gradient
 
             iter += 1
 
@@ -171,7 +166,7 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, batch_size=100
         #     beta_new = beta - eta * gradient
         #
         #     beta_old = beta
-        #     beta = beta_new
+        #     beta_new = beta_old
         #
         #     iter += 1
     return beta
