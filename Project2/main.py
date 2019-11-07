@@ -2,8 +2,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, mean_squared_error, r2_score,\
     roc_auc_score
-from sklearn.preprocessing import StandardScaler
-import scikitplot as skplt
+from sklearn.linear_model import LogisticRegression
+from scikitplot.metrics import plot_confusion_matrix, plot_roc, plot_cumulative_gain
 import seaborn as sns
 import matplotlib.pyplot as plt
 from NeuralNetwork import NeuralNetwork
@@ -13,17 +13,13 @@ np.random.seed(42)
 
 
 def neural_network_credit_card_data():
-    from logit import data_import
-
-    x, y = data_import()
+    x, y = credit_card_data_import()
 
     train_size_ = 0.7
     test_size_ = 1 - train_size_
 
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, train_size=train_size_, test_size=test_size_)
-
-    x_train, x_test = scale_data(x_train, x_test, StandardScaler)
 
     epochs = 50
     batch_size = 500
@@ -51,12 +47,13 @@ def neural_network_credit_card_data():
                                epochs=epochs, batch_size=batch_size, eta=eta,
                                lmbda=lmbda)
             nn.train()
-            train_pred = nn.predict(x_train)
-            test_pred = nn.predict(x_test)
+            train_prob = nn.predict(x_train)
+            test_prob = nn.predict(x_test)
 
-            train_accuracy[i, j] = accuracy_score(y_train, train_pred)
-            test_accuracy_manual[i, j] = accuracy(y_test, test_pred)
-            test_accuracy[i, j] = accuracy_score(y_test, test_pred)
+            train_accuracy[i, j] = accuracy_score(
+                y_train, np.round(train_pred))
+            test_accuracy_manual[i, j] = accuracy(y_test, np.round(test_pred))
+            test_accuracy[i, j] = accuracy_score(y_test, np.round(test_pred))
             aucscore[i, j] = roc_auc_score(y_test, test_pred)
 
     # train_accuracy, test_accuracy, aucscore = calculate_accuracies(
@@ -66,17 +63,6 @@ def neural_network_credit_card_data():
     plot_heatmap(train_accuracy, 'Train accuracy')
     plot_heatmap(test_accuracy, 'Test accuracy')
     plot_heatmap(aucscore, 'ROC AUC score on test data')
-
-
-def Franke_function(x, y):
-    t1 = 0.75 * np.exp(-((9 * x - 2)**2) / 4 - ((9 * y - 2)**2) / 4)
-    t2 = 0.75 * np.exp(-((9 * x + 1)**2) / 49 - ((9 * y + 1)**2) / 10)
-    t3 = 0.5 * np.exp(-((9 * x - 7)**2) / 4 - ((9 * y - 3)**2) / 4)
-    t4 = -0.2 * np.exp(-(9 * x - 4)**2 - (9 * y - 7)**2)
-
-    f = t1 + t2 + t3 + t4
-
-    return f
 
 
 def Franke_for_NN():
@@ -138,7 +124,6 @@ def Franke_for_NN():
                                epochs=epochs, batch_size=batch_size, eta=eta,
                                lmbda=lmbda)
             nn.train()
-            train_pred = nn.predict(X_train)
             test_pred = nn.predict(X_test)
 
             # print(train_pred.T)
@@ -155,46 +140,49 @@ def Franke_for_NN():
 
 def logistic_regression_credit_card_data():
     """ main """
-    x, y = data_import()
+    x, y, y_onehot = credit_card_data_import()
 
-    test_size = 0.3
-    train_size = 1 - test_size
-    xtrain, xtest, ytrain, ytest = train_test_split(
-        x, y, train_size=train_size, test_size=test_size)
-
-    # Scaling
-    scale = StandardScaler()   # Scales by (func - mean)/std.dev
-    scale.fit(xtrain)
-    xtrain = scale.transform(xtrain)
-    xtest = scale.transform(xtest)
+    xtrain, xtest, ytrain, ytest, ytrain_onehot, ytest_onehot = train_test_split(
+        x, y, y_onehot, test_size=0.3)
 
     Xtrain = np.c_[np.array([1] * len(xtrain[:, 0])), xtrain]
     Xtest = np.c_[np.array([1] * len(xtest[:, 0])), xtest]
 
-    beta_init = np.random.randn(Xtrain.shape[1], 1)
+    beta_init = np.random.randn(Xtrain.shape[1], 2)
 
-    beta_GD = gradient_descent(Xtrain, ytrain, beta_init, n=1)
-    pred_GD = np.round(sigmoid(Xtest @ beta_GD))
-    # pred_GD = (prob_GD >= 0.5).astype(int)
+    def calc_prob_pred(X, beta):
+        "Calculates probability and prediction given X and beta."
+        prob = sigmoid(X @ beta)
+        pred = np.argmax(np.round(prob), axis=1)
+        return prob, pred
 
-    beta_SGD = gradient_descent(
-        Xtrain, ytrain, beta_init, epochs=50, batch_size=500, stochastic=True)
-    pred_SGD = np.round(sigmoid(Xtest @ beta_SGD))
+    beta_GD = gradient_descent(Xtrain, ytrain_onehot, beta_init, n=10000)
+    prob_GD, pred_GD = calc_prob_pred(Xtest, beta_GD)
 
-    # clf = LogisticRegression(solver='lbfgs')
-    # clf_fit = clf.fit(Xtrain, ytrain.ravel())
-    # pred_skl = Xtest @ clf_fit.coef_.T
+    beta_SGD = stochastic_gradient_descent(
+        Xtrain, ytrain_onehot, beta_init, epochs=50, batch_size=200)
+    prob_SGD, pred_SGD = calc_prob_pred(Xtest, beta_SGD)
 
-    print(f"Accuracy score for own GD: {accuracy(pred_GD, ytest)}")
-    print(f"Accuracy score for own SGD: {accuracy(pred_SGD, ytest)}")
-    print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
+    clf = LogisticRegression(solver='lbfgs', max_iter=1e5)
+    clf = clf.fit(Xtrain, np.ravel(ytrain))
+    pred_skl = clf.predict(Xtest)
+    prob_skl = clf.predict_proba(Xtest)
+
+    # print(f"Accuracy score for own GD: {accuracy_score(pred_GD, ytest)}")
+    # print(f"Accuracy score for own SGD: {accuracy_score(pred_SGD, ytest)}")
+    # print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
 
     plot_confusion_matrix(ytest, pred_GD)
     plot_confusion_matrix(ytest, pred_SGD)
     plot_confusion_matrix(ytest, pred_skl)
+    plot_roc(ytest, prob_GD)
+    plot_roc(ytest, prob_SGD)
+    plot_roc(ytest, prob_skl)
+
+    plt.show()
 
 
 if __name__ == "__main__":
-    credit_card()
-    # image()
+    # neural_network_credit_card_data()
     # Franke_for_NN()
+    logistic_regression_credit_card_data()
