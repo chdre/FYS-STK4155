@@ -132,12 +132,7 @@ class NeuralNetwork:
             z = (a[l] @ self.w[l]) + self.b[l]
             a[l + 1] = self.forward_activation(z, l)
 
-        if self.cost_function == 'regression':
-            probability = a[-1]
-        else:
-            probability = np.round(a[-1])
-
-        return probability
+        return a[-1]
 
     def train(self):
         data_indices = np.arange(self.n_inputs)
