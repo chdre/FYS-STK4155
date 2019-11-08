@@ -165,9 +165,18 @@ def logistic_regression_credit_card_data():
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
-    # print(f"Accuracy score for own GD: {accuracy_score(pred_GD, ytest)}")
-    # print(f"Accuracy score for own SGD: {accuracy_score(pred_SGD, ytest)}")
-    # print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
+    etas = np.logspace(1, -7, 7)
+    logreg_array = np.zeros(len(etas))
+
+    # Grid search
+    for i, eta in enumate(etas):
+        beta_SGD = stochastic_gradient_descent(
+            X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, eta=eta)
+        temp_prob_SGD, temp_pred_SGD = calc_prob_pred(X_test, beta_SGD)
+        acc_score = accuracy_score(y_test, temp_pred_SGD)
+        roc_score = roc_auc_score(y_test, temp_prob_SGD)
+        if acc_score > acc_score_prev and roc_score > roc_score_prev:
+            prob_SGD, pred_SGD = temp_prob_SGD, temp_pred_SGD
 
     skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
