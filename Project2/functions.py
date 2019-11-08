@@ -113,19 +113,17 @@ def credit_card_data_import(plot_corr=False):
     return x, y, y_onehot
 
 
-def gradient_descent(X, y, beta, eps=1e-6, n=10000, eta=1e-6):
+def gradient_descent(X, y, beta, eps=1e-10, n=10000, eta=1e-6):
     """gradient descent"""
-    beta_old = beta
-
     for i in range(n):
         gradient = X.T @ (sigmoid(X @ beta) - y)
-        beta -= eta * gradient
+        beta_new = beta - eta * gradient
 
-        if abs(np.sum(beta_old - beta)) < eps:
+        if np.linalg.norm(beta_new - beta) < eps:
             print(f"Converged for i={i}")
-            return beta
+            return beta_new
 
-        beta_old = beta
+        beta = beta_new
 
     return beta
 

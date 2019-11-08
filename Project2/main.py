@@ -1,9 +1,9 @@
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error, r2_score,\
     roc_auc_score
 from sklearn.linear_model import LogisticRegression
-from scikitplot.metrics import plot_confusion_matrix, plot_roc, plot_cumulative_gain
+import scikitplot as skplt
 import seaborn as sns
 import matplotlib.pyplot as plt
 from NeuralNetwork import NeuralNetwork
@@ -169,12 +169,12 @@ def logistic_regression_credit_card_data():
     # print(f"Accuracy score for own SGD: {accuracy_score(pred_SGD, ytest)}")
     # print(f"Accuracy score scikit-learn: {clf.score(Xtest, ytest)}")
 
-    plot_confusion_matrix(y_test, pred_GD)
-    plot_confusion_matrix(y_test, pred_SGD)
-    plot_confusion_matrix(y_test, pred_skl)
-    plot_roc(y_test, prob_GD)
-    plot_roc(y_test, prob_SGD)
-    plot_roc(y_test, prob_skl)
+    skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
+    skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
+    skplt.metrics.plot_confusion_matrix(y_test, pred_skl, normalize=True)
+    skplt.metrics.plot_roc(y_test, prob_GD)
+    skplt.metrics.plot_roc(y_test, prob_SGD)
+    skplt.metrics.plot_roc(y_test, prob_skl)
 
     plt.show()
 
