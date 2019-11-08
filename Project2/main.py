@@ -91,7 +91,7 @@ def Franke_for_NN(plot=True):
     # Dataset
     for i in range(n):
         for j in range(n):
-            X[n * i + j] = [x[i], y[j]]
+            X[n * i + j] = [x[i], y[j]] + eps[i, j]
             FF = Franke_function(x[i], y[j])
             Y[n * i + j] = FF + eps[i, j]
             Y_true[n * i + j] = FF
@@ -106,8 +106,8 @@ def Franke_for_NN(plot=True):
 
     epochs = 30
     batch_size = 100
-    eta_vals = np.logspace(-2, -8, 7)
-    lmbda_vals = np.logspace(1, -7, 8)
+    eta_vals = np.logspace(-8, -2, 7)
+    lmbda_vals = np.logspace(-7, 1, 8)
     lmbda_vals[0] = 0
 
     layers = [X_train.shape[1], 25, Y_train.shape[1]]
