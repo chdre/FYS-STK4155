@@ -78,7 +78,7 @@ def neural_network_credit_card_data():
     plt.show()
 
 
-def Franke_for_NN(plot=True):
+def Franke_for_NN():
     n = 50
     x = np.linspace(0, 1, n)
     y = np.linspace(0, 1, n)
