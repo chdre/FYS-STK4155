@@ -128,45 +128,50 @@ def gradient_descent(X, y, beta, eps=1e-10, n=10000, eta=1e-6):
     return beta
 
 
-def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, batch_size=100):
+def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-10,
+                                batch_size=100, m=10000, mini_batches=True):
     """
     Stochastic gradient descent
     """
     data_indices = np.arange(X.shape[0])    # Samples
-    for epoch in range(epochs):
-        iter = 0
-        print(f"Epoch {epoch}")
-        for i in range(X.shape[0]):
-            chosen_datapoints = np.random.choice(
-                data_indices, size=batch_size, replace=False)
 
-            X_sub = X[chosen_datapoints]
-            y_sub = y[chosen_datapoints]
+    if mini_batches == True:
+        for epoch in range(epochs):
+            iter = 0
+            print(f"Epoch {epoch}")
+            for i in range(X.shape[0]):
+                chosen_datapoints = np.random.choice(
+                    data_indices, size=batch_size, replace=False)
 
-            gradient = X_sub.T @ (sigmoid(X_sub @ beta) - y_sub)
+                X_sub = X[chosen_datapoints]
+                y_sub = y[chosen_datapoints]
 
-            eta = learning_schedule(epoch * X.shape[0] / batch_size + iter)
+                gradient = X_sub.T @ (sigmoid(X_sub @ beta) - y_sub)
 
-            beta -= eta * gradient
+                eta = learning_schedule(epoch * X.shape[0] / batch_size + iter)
 
-            iter += 1
+                beta -= eta * gradient
 
-        # while np.abs(np.sum(beta - beta_old)) < eps or iter < m:
-        #     rand_idx = np.random.randint(int(len(X[0])))
-        #     xi = X[rand_idx:rand_idx + 1]  # Matrix
-        #     yi = y[rand_idx:rand_idx + 1]  # Array
-        #     print(xi.shape, (xi@beta).shape, yi.shape, beta.shape)
-        #     exit()
-        #
-        #     gradient = xi.T @ (sigmoid(xi, beta) - yi)
-        #
-        #     eta = learning_schedule(epoch * m + iter)
-        #     beta_new = beta - eta * gradient
-        #
-        #     beta_old = beta
-        #     beta_new = beta_old
-        #
-        #     iter += 1
+                iter += 1
+
+    elif mini_batches == False:
+        for epoch in range(epochs):
+            iter = 0
+            print(f"Epoch {epoch}")
+            beta_old = 2 * beta   # Init to kick off while loop
+            while np.abs(np.sum(beta - beta_old)) < eps or iter < m:
+                rand_idx = np.random.randint(X.shape[1])
+                xi = X[rand_idx:rand_idx + 1]  # Matrix
+                yi = y[rand_idx:rand_idx + 1]  # Array
+
+                gradient = xi.T @ (sigmoid(xi @ beta) - yi)
+
+                eta = learning_schedule(epoch * m + iter)
+                beta -= eta * gradient
+
+                beta_old = beta
+                iter += 1
+
     return beta
 
 

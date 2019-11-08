@@ -150,15 +150,15 @@ def logistic_regression_credit_card_data():
     def calc_prob_pred(X, beta):
         "Calculates probability and prediction given X and beta."
         prob = sigmoid(X @ beta)
-        pred = np.argmax(np.round(prob), axis=1)
+        pred = np.argmax(prob, axis=1)  # Returns 0 or 1 depending on max value
         return prob, pred
 
-    # beta_GD = gradient_descent(X_train, y_train_onehot, beta_init, n=10000)
-    # prob_GD, pred_GD = calc_prob_pred(X_test, beta_GD)
-    #
-    # beta_SGD = stochastic_gradient_descent(
-    #     X_train, y_train_onehot, beta_init, epochs=20, batch_size=100)
-    # prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
+    beta_GD = gradient_descent(X_train, y_train_onehot, beta_init, n=10000)
+    prob_GD, pred_GD = calc_prob_pred(X_test, beta_GD)
+
+    beta_SGD = stochastic_gradient_descent(
+        X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, mini_batches=False)
+    prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
 
     clf = LogisticRegression(solver='lbfgs', max_iter=1e5)
     clf = clf.fit(X_train, np.ravel(y_train))
@@ -168,23 +168,29 @@ def logistic_regression_credit_card_data():
     etas = np.logspace(1, -7, 7)
     logreg_array = np.zeros(len(etas))
 
-    # Grid search
-    for eta in etas:
-        beta_SGD = stochastic_gradient_descent(
-            X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, eta=eta)
-        temp_prob_SGD, temp_pred_SGD = calc_prob_pred(X_test, beta_SGD)
-        acc_score = accuracy_score(y_test, temp_pred_SGD)
-        roc_score = roc_auc_score(y_test, temp_prob_SGD)
-        if acc_score > acc_score_prev and roc_score > roc_score_prev:
-            prob_SGD, pred_SGD = temp_prob_SGD, temp_pred_SGD
-            best_eta = eta
+    prob_SGD_arr = np.zeros(len(etas))
+    pred_SGD_arr = np.zeros(len(etas))
+    acc_score = np.zeros(len(etas))
+    roc_score = np.zeros(len(etas))
 
-    print(best_eta)
+    # # Grid search
+    # for i, eta in enumerate(etas):
+    #     beta_SGD = stochastic_gradient_descent(
+    #         X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, eta=eta)
+    #     prob_SGD[i], pred_SGD[i] = calc_prob_pred(X_test, beta_SGD)
+    #
+    #     acc_score[i] = accuracy_score(y_test, pred_SGD)
+    #     roc_score[i] = roc_auc_score(y_test, prob_SGD)
+    #
+    #     if i > 0 and roc_score[i] > roc_score[i - 1]:
+    #         best_prob_SGD, best_pred_SGD = prob_SGD[i], pred_SGD[i]
+    #
+    # best_eta = etas(np.argmax(roc_score))
 
-    # skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
+    skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_skl, normalize=True)
-    # skplt.metrics.plot_roc(y_test, prob_GD)
+    skplt.metrics.plot_roc(y_test, prob_GD)
     skplt.metrics.plot_roc(y_test, prob_SGD)
     skplt.metrics.plot_roc(y_test, prob_skl)
 
