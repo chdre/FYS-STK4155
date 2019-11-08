@@ -8,10 +8,11 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import confusion_matrix
 
 
-def plot_heatmap(matrix, xtick, ytick):
+def plot_heatmap(matrix, title, xtick, ytick):
     fig, ax = plt.subplots(figsize=(10, 10))
     sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis",
                 xticklabels=xtick, yticklabels=ytick)
+    ax.set_title(title)
     ax.set_ylabel("$\eta$")
     ax.set_xlabel("$\lambda$")
     plt.show()
@@ -128,7 +129,7 @@ def gradient_descent(X, y, beta, eps=1e-10, n=10000, eta=1e-6):
     return beta
 
 
-def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-10,
+def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-8,
                                 batch_size=100, m=10000, mini_batches=True):
     """
     Stochastic gradient descent

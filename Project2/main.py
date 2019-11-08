@@ -21,9 +21,9 @@ def neural_network_credit_card_data():
 
     epochs = 1
     batch_size = 100
-    eta_vals = np.logspace(0, -7, 7)
-    lmbda_vals = np.logspace(0, -7, 7)
-    lmbda_vals[-1] = 0
+    eta_vals = np.logspace(0, -7, 8)
+    lmbda_vals = np.logspace(1, -6, 9)
+    lmbda_vals[0] = 0
 
     layers = [x_train.shape[1], 100, y_train_onehot.shape[1]]
     activation_func = ['sigmoid', 'sigmoid']
@@ -78,7 +78,7 @@ def neural_network_credit_card_data():
     plt.show()
 
 
-def Franke_for_NN(plot_heatmap=True):
+def Franke_for_NN(plot=True):
     n = 50
     x = np.linspace(0, 1, n)
     y = np.linspace(0, 1, n)
@@ -104,11 +104,11 @@ def Franke_for_NN(plot_heatmap=True):
     Y_true_train, Y_true_test = scale_data(
         Y_true_train, Y_true_test, StandardScaler)
 
-    epochs = 1
+    epochs = 30
     batch_size = 100
-    eta_vals = np.logspace(-2, -8, 6)
-    lmbda_vals = np.logspace(0, -5, 5)
-    lmbda_vals[-1] = 0
+    eta_vals = np.logspace(-2, -8, 7)
+    lmbda_vals = np.logspace(1, -7, 8)
+    lmbda_vals[0] = 0
 
     layers = [X_train.shape[1], 25, Y_train.shape[1]]
     activation_func = ['sigmoid', 'nothing']
@@ -122,7 +122,7 @@ def Franke_for_NN(plot_heatmap=True):
 
     # grid search
     for i, eta in enumerate(eta_vals):
-        print(f"At {i} out of {len(eta_vals)}")
+        print(f"At {i} out of {len(eta_vals)-1}")
         for j, lmbda in enumerate(lmbda_vals):
             nn = NeuralNetwork(X_train, Y_train, sizes=layers,
                                cost_function='regression',
@@ -137,10 +137,10 @@ def Franke_for_NN(plot_heatmap=True):
             r2score[i, j] = r2_score(Y_true_test, test_pred)
             mse[i, j] = mean_squared_error(Y_true_test, test_pred)
 
-    # sns.set()
-    # plot_heatmap(r2score, 'R2 score', lmbda_vals, eta_vals)
-    # plot_heatmap(mse, 'Mean squared error', lmbda_vals, eta_vals)
-    # plt.show()
+    sns.set()
+    plot_heatmap(r2score, 'R2 score', lmbda_vals, eta_vals)
+    plot_heatmap(mse, 'Mean squared error', lmbda_vals, eta_vals)
+    plt.show()
 
 
 def logistic_regression_credit_card_data():
