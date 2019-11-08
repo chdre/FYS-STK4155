@@ -177,11 +177,14 @@ def logistic_regression_credit_card_data():
         roc_score = roc_auc_score(y_test, temp_prob_SGD)
         if acc_score > acc_score_prev and roc_score > roc_score_prev:
             prob_SGD, pred_SGD = temp_prob_SGD, temp_pred_SGD
+            best_eta = eta
+
+    print(best_eta)
 
     # skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_skl, normalize=True)
-    skplt.metrics.plot_roc(y_test, prob_GD)
+    # skplt.metrics.plot_roc(y_test, prob_GD)
     skplt.metrics.plot_roc(y_test, prob_SGD)
     skplt.metrics.plot_roc(y_test, prob_skl)
 
