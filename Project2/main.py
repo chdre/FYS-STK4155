@@ -153,12 +153,12 @@ def logistic_regression_credit_card_data():
         pred = np.argmax(np.round(prob), axis=1)
         return prob, pred
 
-    beta_GD = gradient_descent(X_train, y_train_onehot, beta_init, n=10000)
-    prob_GD, pred_GD = calc_prob_pred(X_test, beta_GD)
-
-    beta_SGD = stochastic_gradient_descent(
-        X_train, y_train_onehot, beta_init, epochs=20, batch_size=100)
-    prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
+    # beta_GD = gradient_descent(X_train, y_train_onehot, beta_init, n=10000)
+    # prob_GD, pred_GD = calc_prob_pred(X_test, beta_GD)
+    #
+    # beta_SGD = stochastic_gradient_descent(
+    #     X_train, y_train_onehot, beta_init, epochs=20, batch_size=100)
+    # prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
 
     clf = LogisticRegression(solver='lbfgs', max_iter=1e5)
     clf = clf.fit(X_train, np.ravel(y_train))
@@ -169,7 +169,7 @@ def logistic_regression_credit_card_data():
     logreg_array = np.zeros(len(etas))
 
     # Grid search
-    for i, eta in enumate(etas):
+    for eta in etas:
         beta_SGD = stochastic_gradient_descent(
             X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, eta=eta)
         temp_prob_SGD, temp_pred_SGD = calc_prob_pred(X_test, beta_SGD)
@@ -178,7 +178,7 @@ def logistic_regression_credit_card_data():
         if acc_score > acc_score_prev and roc_score > roc_score_prev:
             prob_SGD, pred_SGD = temp_prob_SGD, temp_pred_SGD
 
-    skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
+    # skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
     skplt.metrics.plot_confusion_matrix(y_test, pred_skl, normalize=True)
     skplt.metrics.plot_roc(y_test, prob_GD)
