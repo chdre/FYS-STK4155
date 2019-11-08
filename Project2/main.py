@@ -67,9 +67,10 @@ def neural_network_credit_card_data():
     test_prob = nn_best.predict(x_test)
     test_pred = np.argmax(test_prob, axis=1)
 
-    skplt.metrics.plot_confusion_matrix(y_test, test_pred, normalize=True)
-    skplt.metrics.plot_roc(y_test, test_prob)
-    skplt.metrics.plot_cumulative_gain(y_test, test_prob)
+    skplt.metrics.plot_confusion_matrix(
+        y_test, test_pred, normalize=True, title=None)
+    skplt.metrics.plot_roc(y_test, test_prob, title=None)
+    skplt.metrics.plot_cumulative_gain(y_test, test_prob, title=None)
 
     sns.set()
     plot_heatmap(train_accuracy, 'Train accuracy', lmbda_vals, eta_vals)
@@ -91,7 +92,7 @@ def Franke_for_NN():
     # Dataset
     for i in range(n):
         for j in range(n):
-            X[n * i + j] = [x[i], y[j]] + eps[i, j]
+            X[n * i + j] = [x[i], y[j]]
             FF = Franke_function(x[i], y[j])
             Y[n * i + j] = FF + eps[i, j]
             Y_true[n * i + j] = FF
@@ -104,13 +105,13 @@ def Franke_for_NN():
     Y_true_train, Y_true_test = scale_data(
         Y_true_train, Y_true_test, StandardScaler)
 
-    epochs = 30
+    epochs = 40
     batch_size = 100
     eta_vals = np.logspace(-8, -2, 7)
-    lmbda_vals = np.logspace(-7, 1, 8)
+    lmbda_vals = np.logspace(-7, 1, 7)
     lmbda_vals[0] = 0
 
-    layers = [X_train.shape[1], 25, Y_train.shape[1]]
+    layers = [X_train.shape[1], 50, Y_train.shape[1]]
     activation_func = ['sigmoid', 'nothing']
     if not len(layers) - 1 == len(activation_func):
         print('Add more activations functions')
@@ -195,15 +196,18 @@ def logistic_regression_credit_card_data():
 
     best_eta = etas(np.argmax(roc_score))
 
-    skplt.metrics.plot_confusion_matrix(y_test, pred_GD, normalize=True)
-    skplt.metrics.plot_confusion_matrix(y_test, pred_SGD, normalize=True)
-    skplt.metrics.plot_confusion_matrix(y_test, pred_skl, normalize=True)
-    skplt.metrics.plot_roc(y_test, prob_GD)
-    skplt.metrics.plot_roc(y_test, prob_SGD)
-    skplt.metrics.plot_roc(y_test, prob_skl)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_GD)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_SGD)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_skl)
+    skplt.metrics.plot_confusion_matrix(
+        y_test, pred_GD, normalize=True, title=None)
+    skplt.metrics.plot_confusion_matrix(
+        y_test, pred_SGD, normalize=True, title=None)
+    skplt.metrics.plot_confusion_matrix(
+        y_test, pred_skl, normalize=True, title=None)
+    skplt.metrics.plot_roc(y_test, prob_GD, title=None)
+    skplt.metrics.plot_roc(y_test, prob_SGD, title=None)
+    skplt.metrics.plot_roc(y_test, prob_skl, title=None)
+    skplt.metrics.plot_cumulative_gain(Y_test, prob_GD, title=None)
+    skplt.metrics.plot_cumulative_gain(Y_test, prob_SGD, title=None)
+    skplt.metrics.plot_cumulative_gain(Y_test, prob_skl, title=None)
 
     plt.show()
 
