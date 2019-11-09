@@ -8,12 +8,11 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import confusion_matrix
 
 
-def plot_heatmap(matrix, title, xtick, ytick):
+def plot_heatmap(matrix, xtick, ytick):
     fig, ax = plt.subplots(figsize=(10, 10))
     sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis",
                 xticklabels=xtick, yticklabels=ytick)
     plt.xticks(rotation=90)
-    ax.set_title(title)
     ax.set_ylabel("$\eta$")
     ax.set_xlabel("$\lambda$")
     plt.show()

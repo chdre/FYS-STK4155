@@ -29,14 +29,10 @@ def neural_network_credit_card_data():
     lmbda_vals = np.logspace(1, -6, 8)
     lmbda_vals[0] = 0
 
-    layers = [x_train.shape[1], 100, y_train_onehot.shape[1]]
-    activation_func = ['sigmoid', 'sigmoid']
-    if not len(layers) - 1 == len(activation_func):
-        print('Add more activations functions')
-        exit()
+    layers = [x_train.shape[1], 64, 32, 16, y_train_onehot.shape[1]]
+    activation_func = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid']
 
     train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
-    test_accuracy_manual = np.zeros((len(eta_vals), len(lmbda_vals)))
     test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
     auc_score = np.zeros((len(eta_vals), len(lmbda_vals)))
     NN = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
@@ -52,13 +48,13 @@ def neural_network_credit_card_data():
 
             nn.train()
             NN[i, j] = nn   # Storing trained nn
+
             train_prob = nn.predict(x_train)
             train_pred = np.argmax(train_prob, axis=1)
             test_prob = nn.predict(x_test)
             test_pred = np.argmax(test_prob, axis=1)
 
             train_accuracy[i, j] = accuracy_score(y_train, train_pred)
-            test_accuracy_manual[i, j] = accuracy(y_test, test_pred)
             test_accuracy[i, j] = accuracy_score(y_test, test_pred)
             auc_score[i, j] = roc_auc_score(y_test_onehot, test_prob)
 
@@ -72,14 +68,14 @@ def neural_network_credit_card_data():
     test_pred = np.argmax(test_prob, axis=1)
 
     skplt.metrics.plot_confusion_matrix(
-        y_test, test_pred, normalize=True, title=None)
+        y_test, test_pred, normalize=True, title=' ')
     skplt.metrics.plot_roc(y_test, test_prob, title=None)
     skplt.metrics.plot_cumulative_gain(y_test, test_prob, title=None)
 
     sns.set()
-    plot_heatmap(train_accuracy, 'Train accuracy', lmbda_vals, eta_vals)
-    plot_heatmap(test_accuracy, 'Test accuracy', lmbda_vals, eta_vals)
-    plot_heatmap(auc_score, 'ROC AUC score on test data', lmbda_vals, eta_vals)
+    plot_heatmap(train_accuracy, lmbda_vals, eta_vals)
+    plot_heatmap(test_accuracy, lmbda_vals, eta_vals)
+    plot_heatmap(auc_score, lmbda_vals, eta_vals)
     plt.show()
 
 
@@ -101,13 +97,6 @@ def Franke_for_NN():
             Y[n * i + j] = FF  # + eps[i, j]
             Y_true[n * i + j] = FF
 
-    # x, y = np.meshgrid(np.linspace(0, 1, n), np.linspace(0, 1, n))
-    # z = Franke_function(x, y)
-    #
-    # X = np.c_[x.ravel()[:, np.newaxis], y.ravel()[:, np.newaxis]]
-    # Y = z.ravel()[:, np.newaxis]
-    # Y_true = z.ravel()[:, np.newaxis] + eps
-
     X_train, X_test, Y_train, Y_test, Y_true_train, Y_true_test = train_test_split(
         X, Y, Y_true, test_size=0.3)
 
@@ -116,17 +105,14 @@ def Franke_for_NN():
     Y_true_train, Y_true_test = scale_data(
         Y_true_train, Y_true_test, StandardScaler)
 
-    epochs = 10
+    epochs = 50
     batch_size = 100
     eta_vals = np.logspace(-8, -2, 7)
     lmbda_vals = np.logspace(-7, 1, 9)
     lmbda_vals[0] = 0
 
-    layers = [X_train.shape[1], 50, 25, Y_train.shape[1]]
+    layers = [X_train.shape[1], 500, 50, Y_train.shape[1]]
     activation_func = ['sigmoid', 'sigmoid', 'nothing']
-    if not len(layers) - 1 == len(activation_func):
-        print('Add more activations functions')
-        exit()
 
     mse = np.zeros((len(eta_vals), len(lmbda_vals)))
     r2score = np.zeros((len(eta_vals), len(lmbda_vals)))
@@ -152,9 +138,6 @@ def Franke_for_NN():
 
     xgrid, ygrid = np.meshgrid(x, y)
 
-    plotting_function(xgrid, ygrid, Y_true.reshape(n, n), n)
-    plt.show()
-
     # grid search
     for i, eta in enumerate(eta_vals):
         print(f"At {i} out of {len(eta_vals)-1}")
@@ -168,9 +151,6 @@ def Franke_for_NN():
             nn.train()
             NN[i, j] = nn
             test_pred = nn.predict(X)
-
-            plotting_function(xgrid, ygrid, test_pred.reshape(n, n), n)
-            plt.show()
 
             r2score[i, j] = r2_score(Y_true, test_pred)
             mse[i, j] = mean_squared_error(Y_true, test_pred)
@@ -248,6 +228,6 @@ def logistic_regression_credit_card_data():
 
 
 if __name__ == "__main__":
-    # neural_network_credit_card_data()
-    Franke_for_NN()
+    neural_network_credit_card_data()
+    # Franke_for_NN()
     # logistic_regression_credit_card_data()
