@@ -25,8 +25,8 @@ def neural_network_credit_card_data():
 
     epochs = 20
     batch_size = 100
-    eta_vals = np.logspace(0, -7, 8)
-    lmbda_vals = np.logspace(1, -6, 8)
+    eta_vals = np.logspace(-7, 0, 8)
+    lmbda_vals = np.logspace(-6, 1, 8)
     lmbda_vals[0] = 0
 
     layers = [x_train.shape[1], 64, 32, 16, y_train_onehot.shape[1]]
