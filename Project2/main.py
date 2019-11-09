@@ -103,10 +103,10 @@ def Franke_for_NN():
 
     Y_train, Y_test = scale_data(Y_train, Y_test, StandardScaler)
 
-    epochs = 20
+    epochs = 40
     batch_size = 100
-    eta_vals = np.logspace(-7, -4, 4)
-    lmbda_vals = np.logspace(-4, 1, 5)
+    eta_vals = np.logspace(-7, -3, 5)
+    lmbda_vals = np.logspace(-4, 1, 6)
     lmbda_vals[0] = 0
 
     layers = [X_train.shape[1], 100, 50, Y_train.shape[1]]
@@ -169,43 +169,40 @@ def logistic_regression_credit_card_data():
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
-    etas = np.logspace(1, -7, 7)
-    logreg_array = np.zeros(len(etas))
+    etas = np.logspace(-7, -2, 1)
 
-    prob_SGD_arr = np.zeros(len(etas))
-    pred_SGD_arr = np.zeros(len(etas))
     acc_score = np.zeros(len(etas))
     roc_score = np.zeros(len(etas))
 
     # Grid search
     for i, eta in enumerate(etas):
         beta_SGD = stochastic_gradient_descent(
-            X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, eta=eta)
-        prob_SGD[i], pred_SGD[i] = calc_prob_pred(X_test, beta_SGD)
+            X_train, y_train_onehot, beta_init, epochs=1, batch_size=100, eta=eta)
+        prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
 
         acc_score[i] = accuracy_score(y_test, pred_SGD)
-        roc_score[i] = roc_auc_score(y_test, prob_SGD)
+        roc_score[i] = roc_auc_score(y_test_onehot, prob_SGD)
 
         if i > 0 and roc_score[i] > roc_score[i - 1]:
-            best_prob_SGD, best_pred_SGD = prob_SGD[i], pred_SGD[i]
+            best_prob_SGD, best_pred_SGD = prob_SGD, pred_SGD
 
     skplt.metrics.plot_confusion_matrix(
         y_test, pred_GD, normalize=True, title=' ')
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_SGD, normalize=True, title=' ')
+        y_test, best_pred_SGD, normalize=True, title=' ')
     skplt.metrics.plot_confusion_matrix(
         y_test, pred_skl, normalize=True, title=' ')
     skplt.metrics.plot_roc(y_test, prob_GD, title=None)
-    skplt.metrics.plot_roc(y_test, prob_SGD, title=None)
+    skplt.metrics.plot_roc(y_test, best_prob_SGD, title=None)
     skplt.metrics.plot_roc(y_test, prob_skl, title=None)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_GD, title=None)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_SGD, title=None)
-    skplt.metrics.plot_cumulative_gain(Y_test, prob_skl, title=None)
+    skplt.metrics.plot_cumulative_gain(y_test, prob_GD, title=None)
+    skplt.metrics.plot_cumulative_gain(y_test, best_prob_SGD, title=None)
+    skplt.metrics.plot_cumulative_gain(y_test, prob_skl, title=None)
 
     plt.show()
 
 
 if __name__ == "__main__":
     # neural_network_credit_card_data()
-    Franke_for_NN()
-    # logistic_regression_credit_card_data()
+    # Franke_for_NN()
+    logistic_regression_credit_card_data()
