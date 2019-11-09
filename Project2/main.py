@@ -87,6 +87,8 @@ def Franke_for_NN():
     Y = np.zeros((n * n, 1))
     Y_true = np.zeros((n * n, 1))
 
+    xgrid, ygrid = np.meshgrid(x, y)
+
     eps = np.random.normal(0, 0.5, (n, n))  # Noise
 
     # Dataset
@@ -94,49 +96,25 @@ def Franke_for_NN():
         for j in range(n):
             X[n * i + j] = [x[i], y[j]]
             FF = Franke_function(x[i], y[j])
-            Y[n * i + j] = FF  # + eps[i, j]
-            Y_true[n * i + j] = FF
+            Y[n * i + j] = FF
 
-    X_train, X_test, Y_train, Y_test, Y_true_train, Y_true_test = train_test_split(
-        X, Y, Y_true, test_size=0.3)
+    X_train, X_test, Y_train, Y_test, = train_test_split(
+        X, Y, test_size=0.3)
 
-    X_train, X_test = scale_data(X_train, X_test, StandardScaler)
     Y_train, Y_test = scale_data(Y_train, Y_test, StandardScaler)
-    Y_true_train, Y_true_test = scale_data(
-        Y_true_train, Y_true_test, StandardScaler)
 
-    epochs = 50
+    epochs = 20
     batch_size = 100
-    eta_vals = np.logspace(-8, -2, 7)
-    lmbda_vals = np.logspace(-7, 1, 9)
+    eta_vals = np.logspace(-7, -4, 4)
+    lmbda_vals = np.logspace(-4, 1, 5)
     lmbda_vals[0] = 0
 
-    layers = [X_train.shape[1], 500, 50, Y_train.shape[1]]
-    activation_func = ['sigmoid', 'sigmoid', 'nothing']
+    layers = [X_train.shape[1], 100, 50, Y_train.shape[1]]
+    activation_func = ['tanh', 'tanh', 'nothing']
 
     mse = np.zeros((len(eta_vals), len(lmbda_vals)))
     r2score = np.zeros((len(eta_vals), len(lmbda_vals)))
     NN = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
-
-    def plotting_function(x, y, z, n):
-        """
-        Plots a 3d surface.
-        """
-
-        z = np.reshape(z, (n, n))
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-
-        surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm,
-                               linewidth=0, antialiased=False)
-
-        ax.set_zlim(np.min(z), np.max(z))
-        ax.zaxis.set_major_locator(LinearLocator(10))
-        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-        return fig.colorbar(surf, shrink=0.5, aspect=5)
-
-    xgrid, ygrid = np.meshgrid(x, y)
 
     # grid search
     for i, eta in enumerate(eta_vals):
@@ -150,14 +128,14 @@ def Franke_for_NN():
 
             nn.train()
             NN[i, j] = nn
-            test_pred = nn.predict(X)
+            test_pred = nn.predict(X_test)
 
-            r2score[i, j] = r2_score(Y_true, test_pred)
-            mse[i, j] = mean_squared_error(Y_true, test_pred)
+            r2score[i, j] = r2_score(Y_test, test_pred)
+            mse[i, j] = mean_squared_error(Y_test, test_pred)
 
     sns.set()
-    plot_heatmap(r2score, 'R2 score', lmbda_vals, eta_vals)
-    plot_heatmap(mse, 'Mean squared error', lmbda_vals, eta_vals)
+    plot_heatmap(r2score, lmbda_vals, eta_vals)
+    plot_heatmap(mse, lmbda_vals, eta_vals)
     plt.show()
 
 
@@ -212,11 +190,11 @@ def logistic_regression_credit_card_data():
             best_prob_SGD, best_pred_SGD = prob_SGD[i], pred_SGD[i]
 
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_GD, normalize=True, title=None)
+        y_test, pred_GD, normalize=True, title=' ')
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_SGD, normalize=True, title=None)
+        y_test, pred_SGD, normalize=True, title=' ')
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_skl, normalize=True, title=None)
+        y_test, pred_skl, normalize=True, title=' ')
     skplt.metrics.plot_roc(y_test, prob_GD, title=None)
     skplt.metrics.plot_roc(y_test, prob_SGD, title=None)
     skplt.metrics.plot_roc(y_test, prob_skl, title=None)
@@ -228,6 +206,6 @@ def logistic_regression_credit_card_data():
 
 
 if __name__ == "__main__":
-    neural_network_credit_card_data()
-    # Franke_for_NN()
+    # neural_network_credit_card_data()
+    Franke_for_NN()
     # logistic_regression_credit_card_data()

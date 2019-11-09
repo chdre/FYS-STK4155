@@ -105,7 +105,7 @@ def credit_card_data_import(plot_corr=False):
     if plot_corr:
         df_scaled = df - df.mean()
         corr = df_scaled.corr()
-        sns.heatmap(corr, annot=True, fmt='.2f')
+        sns.heatmap(corr, annot=True, fmt='.1f')
         plt.xticks(rotation=90)
         # Because turning something 360 degrees helps??? :)
         plt.yticks(rotation=360)
