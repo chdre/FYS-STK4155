@@ -169,7 +169,7 @@ def logistic_regression_credit_card_data():
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
-    etas = np.logspace(-7, -2, 1)
+    etas = np.logspace(-7, -2, 6)
 
     acc_score = np.zeros(len(etas))
     roc_score = np.zeros(len(etas))
