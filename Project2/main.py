@@ -28,7 +28,7 @@ def neural_network_credit_card_data():
     x_train, x_test, y_train, y_test, y_train_onehot, y_test_onehot = \
         train_test_split(x, y, y_onehot, test_size=0.3)
 
-    epochs = 1
+    epochs = 50
     batch_size = 100
     eta_vals = np.logspace(-7, -1, 7)
     lmbda_vals = np.logspace(-6, 1, 8)
@@ -79,7 +79,7 @@ def neural_network_credit_card_data():
         learning_rate_init=0.01,
         max_iter=1000,
         tol=1e-7,
-        verbose=True)
+        verbose=False)
     NN_sklearn = NN_sklearn.fit(x_train, y_train.ravel())
     test_pred_NNskl = NN_sklearn.predict(x_test)
     test_proba_NNskl = NN_sklearn.predict_proba(x_test)
@@ -133,7 +133,7 @@ def Franke_for_NN():
 
     Y_train, Y_test = scale_data(Y_train, Y_test, StandardScaler)
 
-    epochs = 1
+    epochs = 20
     batch_size = 100
     eta_vals = np.logspace(-7, -4, 4)
     lmbda_vals = np.logspace(-4, 1, 6)
@@ -170,7 +170,7 @@ def Franke_for_NN():
         learning_rate_init=0.01,
         max_iter=1000,
         tol=1e-7,
-        verbose=True)
+        verbose=False)
     NN_sklearn = NN_sklearn.fit(X_train, Y_train.ravel())
     test_pred_NNskl = NN_sklearn.predict(X_test)
 
@@ -215,7 +215,7 @@ def logistic_regression_credit_card_data():
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
-    epochs = 2
+    epochs = 50
     batch_size = 100
     etas = np.logspace(-6, -2, 6)
 
@@ -244,7 +244,6 @@ def logistic_regression_credit_card_data():
     skplt.metrics.plot_roc(y_test, prob_GD, title='ROC Curve (GD)')
     skplt.metrics.plot_roc(y_test, best_prob_SGD, title='ROC Curve (SGD)')
     skplt.metrics.plot_roc(y_test, prob_skl, title='ROC Curve (Scikit-learn)')
-    skplt.metrics.plot_roc(y_test, prob_skl_grid, title=None)
 
     skplt.metrics.plot_cumulative_gain(
         y_test, prob_GD, title='Gains Curve (GD)')
