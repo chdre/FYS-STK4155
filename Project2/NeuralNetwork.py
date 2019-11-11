@@ -115,17 +115,7 @@ class NeuralNetwork:
             return d
 
     def predict(self, x):
-        # if not self.cost_func == 'regression':
         a = np.empty(self.layers, dtype=np.ndarray)
-        # self.a[0] = x
-        #
-        # self.feed_forward()
-        # probability = np.round(self.a[-1])
-        #
-        # return probability
-        #
-        # else:
-        # a = np.empty(self.layers, dtype=np.ndarray)
         a[0] = x
 
         for l in range(self.layers - 1):

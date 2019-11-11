@@ -28,6 +28,7 @@ def plot_confusion_matrix(y, pred):
 
 
 def scale_data(x, y, method):
+    "Scales x and y by x with method. Returns scaled x and y."
     scale = method()
     scale.fit(x)
     x = scale.transform(x)
@@ -56,8 +57,8 @@ def Franke_function(x, y):
 
 def credit_card_data_import(plot_corr=False):
     """
-    Imports credit card data, returns test and train set for design matrix and y.
-    X is onehot encoded.
+    Imports credit card data, removes rows where there has been no billing or
+    payment. Performs a onehot encoding on x and y. Returns x, y and y_onehot .
     """
     # Importing data
     cwd = os.getcwd()   # Current working directory
@@ -89,7 +90,7 @@ def credit_card_data_import(plot_corr=False):
     x = df.loc[:, df.columns != 'DefaultPaymentNextMonth'].values
     y = df.loc[:, df.columns == 'DefaultPaymentNextMonth'].values
 
-    # Scaling x (second argument)
+    # Scaling x (second argument only to pass)
     x, _ = scale_data(x, x, StandardScaler)
 
     # Categorical variables to one-hot's
@@ -103,19 +104,23 @@ def credit_card_data_import(plot_corr=False):
     y_onehot = onehotencoder.fit_transform(y)
 
     if plot_corr:
+        """
+        Does not show the same plot as in the report. Had to downgrade to
+        matplotlib 3.1.0 because scikitplot does not work well with matplotlib
+        3.1.1. Plot does not include all ticks with 3.1.0.
+        """
         df_scaled = df - df.mean()
         corr = df_scaled.corr()
         sns.heatmap(corr, annot=True, fmt='.1f')
-        plt.xticks(rotation=90)
-        # Because turning something 360 degrees helps??? :)
+        plt.xticks(rotation=90)  # Need to rotate ticks for matplotlib 3.1.1
         plt.yticks(rotation=360)
+        # Because turning something 360 degrees helps??? :) Spoiler: it does :\
         plt.show()
 
     return x, y, y_onehot
 
 
 def gradient_descent(X, y, beta, eps=1e-10, n=10000, eta=1e-6):
-    """gradient descent"""
     for i in range(n):
         gradient = X.T @ (sigmoid(X @ beta) - y)
         beta_new = beta - eta * gradient
@@ -131,15 +136,11 @@ def gradient_descent(X, y, beta, eps=1e-10, n=10000, eta=1e-6):
 
 def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-8,
                                 batch_size=100, m=10000, mini_batches=True):
-    """
-    Stochastic gradient descent
-    """
     data_indices = np.arange(X.shape[0])    # Samples
 
     if mini_batches == True:
         for epoch in range(epochs):
             iter = 0
-            print(f"Epoch {epoch}")
             for i in range(X.shape[0]):
                 chosen_datapoints = np.random.choice(
                     data_indices, size=batch_size, replace=False)
@@ -158,7 +159,6 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-8,
     elif mini_batches == False:
         for epoch in range(epochs):
             iter = 0
-            print(f"Epoch {epoch}")
             beta_old = 2 * beta   # Init to kick off while loop
             while np.abs(np.sum(beta - beta_old)) < eps or iter < m:
                 rand_idx = np.random.randint(X.shape[1])
@@ -174,9 +174,3 @@ def stochastic_gradient_descent(X, y, beta, eta=1e-6, epochs=100, eps=1e-8,
                 iter += 1
 
     return beta
-
-
-def accuracy(y_tilde, y):
-    """ returns accruacy"""
-    I = np.mean(y_tilde == y)
-    return I

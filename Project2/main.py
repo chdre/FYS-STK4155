@@ -3,21 +3,26 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, mean_squared_error, r2_score,\
     roc_auc_score
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 import scikitplot as skplt
 import seaborn as sns
 import matplotlib.pyplot as plt
 from NeuralNetwork import NeuralNetwork
 from functions import *
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
 
 np.random.seed(42)
-
 plt.rcParams.update({'font.size': 12})
 
 
 def neural_network_credit_card_data():
+    """
+    Classification of credit card default data using the neural network in
+    NeuralNetwork.py. Does a gridsearch over eta and lambda, being the
+    learning rate and penalty.
+    Shows heatmaps of roc score, test and train accuracy as a function varying
+    eta and lambda, plots of confusion matrix, roc auc and cumulative gain of
+    both our neural network and for scikit-learns MLPClassifier.
+    """
     x, y, y_onehot = credit_card_data_import()
 
     x_train, x_test, y_train, y_test, y_train_onehot, y_test_onehot = \
@@ -25,22 +30,21 @@ def neural_network_credit_card_data():
 
     epochs = 20
     batch_size = 100
-    eta_vals = np.logspace(-7, 0, 8)
+    eta_vals = np.logspace(-7, -1, 7)
     lmbda_vals = np.logspace(-6, 1, 8)
-    lmbda_vals[0] = 0
+    lmbda_vals[0] = 0  # For a zero value of penalty
 
     layers = [x_train.shape[1], 64, 32, 16, y_train_onehot.shape[1]]
     activation_func = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid']
 
     train_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
     test_accuracy = np.zeros((len(eta_vals), len(lmbda_vals)))
-    auc_score = np.zeros((len(eta_vals), len(lmbda_vals)))
+    roc_score = np.zeros((len(eta_vals), len(lmbda_vals)))
     NN = np.zeros((len(eta_vals), len(lmbda_vals)), dtype=object)
 
     # grid search
     for i, eta in enumerate(eta_vals):
         for j, lmbda in enumerate(lmbda_vals):
-            print(f"Starting for j = {j} for i = {i}")
             nn = NeuralNetwork(x_train, y_train_onehot, sizes=layers,
                                activation_function=activation_func,
                                epochs=epochs, batch_size=batch_size, eta=eta,
@@ -56,7 +60,7 @@ def neural_network_credit_card_data():
 
             train_accuracy[i, j] = accuracy_score(y_train, train_pred)
             test_accuracy[i, j] = accuracy_score(y_test, test_pred)
-            auc_score[i, j] = roc_auc_score(y_test_onehot, test_prob)
+            roc_score[i, j] = roc_auc_score(y_test_onehot, test_prob)
 
     auc_score_coord = np.argwhere(auc_score == auc_score.max())
     eta_ind = auc_score_coord[0, 0]
@@ -67,19 +71,44 @@ def neural_network_credit_card_data():
     test_prob = nn_best.predict(x_test)
     test_pred = np.argmax(test_prob, axis=1)
 
+    # Scikit learn neural network
+    NN_sklearn = MLPClassifier(
+        hidden_layer_sizes=(64, 32, 16),
+        learning_rate="adaptive",
+        activation='logistic',
+        learning_rate_init=0.01,
+        max_iter=1000,
+        tol=1e-7,
+        verbose=True)
+    NN_sklearn = NN_sklearn.fit(x_train, y_train)
+    test_pred_NNskl = NN_sklearn.predict(x_test)
+    test_proba_NNskl = NN_sklearn.predict_proba(x_test)
+
     skplt.metrics.plot_confusion_matrix(
         y_test, test_pred, normalize=True, title=' ')
+    skplt.metrics.plot_confusion_matrix(
+        y_test, test_pred_NNskl, normalize=True, title=' ')
     skplt.metrics.plot_roc(y_test, test_prob, title=None)
+    skplt.metrics.plot_roc(y_test, test_proba_NNskl, title=None)
     skplt.metrics.plot_cumulative_gain(y_test, test_prob, title=None)
+    skplt.metrics.plot_cumulative_gain(y_test, test_proba_NNskl, title=None)
 
     sns.set()
     plot_heatmap(train_accuracy, lmbda_vals, eta_vals)
     plot_heatmap(test_accuracy, lmbda_vals, eta_vals)
-    plot_heatmap(auc_score, lmbda_vals, eta_vals)
+    plot_heatmap(roc_score, lmbda_vals, eta_vals)
     plt.show()
 
 
 def Franke_for_NN():
+    """
+    Regression of credit card default data using the neural network in
+    NeuralNetwork.py. Does a gridsearch over eta and lambda, being the
+    learning rate and penalty.
+    Shows heatmaps of R2 score and mse as a function varying
+    eta and lambda. Also prints the R2 score and MSE for scikit-learns
+    MLPRegressor.
+    """
     n = 50
     x = np.linspace(0, 1, n)
     y = np.linspace(0, 1, n)
@@ -103,11 +132,11 @@ def Franke_for_NN():
 
     Y_train, Y_test = scale_data(Y_train, Y_test, StandardScaler)
 
-    epochs = 40
+    epochs = 50
     batch_size = 100
-    eta_vals = np.logspace(-7, -3, 5)
+    eta_vals = np.logspace(-7, -4, 4)
     lmbda_vals = np.logspace(-4, 1, 6)
-    lmbda_vals[0] = 0
+    lmbda_vals[0] = 0   # For a zero value of penalty
 
     layers = [X_train.shape[1], 100, 50, Y_train.shape[1]]
     activation_func = ['tanh', 'tanh', 'nothing']
@@ -118,7 +147,6 @@ def Franke_for_NN():
 
     # grid search
     for i, eta in enumerate(eta_vals):
-        print(f"At {i} out of {len(eta_vals)-1}")
         for j, lmbda in enumerate(lmbda_vals):
             nn = NeuralNetwork(X_train, Y_train, sizes=layers,
                                cost_function='regression',
@@ -133,6 +161,21 @@ def Franke_for_NN():
             r2score[i, j] = r2_score(Y_test, test_pred)
             mse[i, j] = mean_squared_error(Y_test, test_pred)
 
+    # Scikit learn neural network
+    NN_sklearn = MLPRegressor(
+        hidden_layer_sizes=(100, 50),
+        activation='tanh',
+        learning_rate="adaptive",
+        learning_rate_init=0.01,
+        max_iter=1000,
+        tol=1e-7,
+        verbose=True)
+    NN_sklearn = NN_sklearn.fit(X_train, Y_train)
+    test_pred_NNskl = NN_sklearn.predict(X_test)
+
+    print(f"R2 score {r2_score(Y_test, test_pred_NNskl)}")
+    print(f"MSE {mean_squared_error(Y_test, test_pred_NNskl)}")
+
     sns.set()
     plot_heatmap(r2score, lmbda_vals, eta_vals)
     plot_heatmap(mse, lmbda_vals, eta_vals)
@@ -140,7 +183,13 @@ def Franke_for_NN():
 
 
 def logistic_regression_credit_card_data():
-    """ main """
+    """
+    Performs a logistic regression on the credit card default data with gradient
+    descent, stochastic gradient descent with mini batches.
+    Performs a grid search for different learning rates. Plots the confusion
+    matrix, roc auc and cumulative gain for GD, SGD and scikit-learns logistic
+    regression.
+    """
     x, y, y_onehot = credit_card_data_import()
 
     x_train, x_test, y_train, y_test, y_train_onehot, y_test_onehot = train_test_split(
@@ -160,16 +209,12 @@ def logistic_regression_credit_card_data():
     beta_GD = gradient_descent(X_train, y_train_onehot, beta_init, n=10000)
     prob_GD, pred_GD = calc_prob_pred(X_test, beta_GD)
 
-    # beta_SGD = stochastic_gradient_descent(
-    #     X_train, y_train_onehot, beta_init, epochs=20, batch_size=100, mini_batches=False)
-    # prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
-
     clf = LogisticRegression(solver='lbfgs', max_iter=1e5)
     clf = clf.fit(X_train, np.ravel(y_train))
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
-    etas = np.logspace(-7, -2, 6)
+    etas = np.logspace(-6, -2, 6)
 
     acc_score = np.zeros(len(etas))
     roc_score = np.zeros(len(etas))
@@ -177,7 +222,7 @@ def logistic_regression_credit_card_data():
     # Grid search
     for i, eta in enumerate(etas):
         beta_SGD = stochastic_gradient_descent(
-            X_train, y_train_onehot, beta_init, epochs=1, batch_size=100, eta=eta)
+            X_train, y_train_onehot, beta_init, epochs=50, batch_size=100, eta=eta)
         prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
 
         acc_score[i] = accuracy_score(y_test, pred_SGD)
@@ -195,6 +240,8 @@ def logistic_regression_credit_card_data():
     skplt.metrics.plot_roc(y_test, prob_GD, title=None)
     skplt.metrics.plot_roc(y_test, best_prob_SGD, title=None)
     skplt.metrics.plot_roc(y_test, prob_skl, title=None)
+    skplt.metrics.plot_roc(y_test, prob_skl_grid, title=None)
+
     skplt.metrics.plot_cumulative_gain(y_test, prob_GD, title=None)
     skplt.metrics.plot_cumulative_gain(y_test, best_prob_SGD, title=None)
     skplt.metrics.plot_cumulative_gain(y_test, prob_skl, title=None)
@@ -203,6 +250,6 @@ def logistic_regression_credit_card_data():
 
 
 if __name__ == "__main__":
-    # neural_network_credit_card_data()
-    # Franke_for_NN()
+    neural_network_credit_card_data()
+    Franke_for_NN()
     logistic_regression_credit_card_data()
