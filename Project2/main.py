@@ -241,6 +241,7 @@ def logistic_regression_credit_card_data():
         y_test, best_pred_SGD, normalize=True, title='Normalized Confusion Matrix (SGD)')
     skplt.metrics.plot_confusion_matrix(
         y_test, pred_skl, normalize=True, title='Normalized Confusion Matrix (Scikit-learn)')
+
     skplt.metrics.plot_roc(y_test, prob_GD, title='ROC Curve (GD)')
     skplt.metrics.plot_roc(y_test, best_prob_SGD, title='ROC Curve (SGD)')
     skplt.metrics.plot_roc(y_test, prob_skl, title='ROC Curve (Scikit-learn)')
