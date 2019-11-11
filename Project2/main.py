@@ -28,7 +28,7 @@ def neural_network_credit_card_data():
     x_train, x_test, y_train, y_test, y_train_onehot, y_test_onehot = \
         train_test_split(x, y, y_onehot, test_size=0.3)
 
-    epochs = 20
+    epochs = 1
     batch_size = 100
     eta_vals = np.logspace(-7, -1, 7)
     lmbda_vals = np.logspace(-6, 1, 8)
@@ -62,9 +62,9 @@ def neural_network_credit_card_data():
             test_accuracy[i, j] = accuracy_score(y_test, test_pred)
             roc_score[i, j] = roc_auc_score(y_test_onehot, test_prob)
 
-    auc_score_coord = np.argwhere(auc_score == auc_score.max())
-    eta_ind = auc_score_coord[0, 0]
-    lmbda_ind = auc_score_coord[0, 1]
+    roc_score_coord = np.argwhere(roc_score == roc_score.max())
+    eta_ind = roc_score_coord[0, 0]
+    lmbda_ind = roc_score_coord[0, 1]
 
     nn_best = NN[eta_ind, lmbda_ind]
 
@@ -80,23 +80,24 @@ def neural_network_credit_card_data():
         max_iter=1000,
         tol=1e-7,
         verbose=True)
-    NN_sklearn = NN_sklearn.fit(x_train, y_train)
+    NN_sklearn = NN_sklearn.fit(x_train, y_train.ravel())
     test_pred_NNskl = NN_sklearn.predict(x_test)
     test_proba_NNskl = NN_sklearn.predict_proba(x_test)
 
-    skplt.metrics.plot_confusion_matrix(
-        y_test, test_pred, normalize=True, title=' ')
-    skplt.metrics.plot_confusion_matrix(
-        y_test, test_pred_NNskl, normalize=True, title=' ')
-    skplt.metrics.plot_roc(y_test, test_prob, title=None)
-    skplt.metrics.plot_roc(y_test, test_proba_NNskl, title=None)
-    skplt.metrics.plot_cumulative_gain(y_test, test_prob, title=None)
-    skplt.metrics.plot_cumulative_gain(y_test, test_proba_NNskl, title=None)
+    skplt.metrics.plot_confusion_matrix(y_test, test_pred, normalize=True)
+    skplt.metrics.plot_confusion_matrix(y_test, test_pred_NNskl, normalize=True,
+                                        title='Normalized Confusion Matrix Scikit-learn')
+    skplt.metrics.plot_roc(y_test, test_prob)
+    skplt.metrics.plot_roc(y_test, test_proba_NNskl,
+                           title='ROC Curves Scikit-learn')
+    skplt.metrics.plot_cumulative_gain(y_test, test_prob)
+    skplt.metrics.plot_cumulative_gain(
+        y_test, test_proba_NNskl, title='Gains Curve Scikit-learn')
 
     sns.set()
-    plot_heatmap(train_accuracy, lmbda_vals, eta_vals)
-    plot_heatmap(test_accuracy, lmbda_vals, eta_vals)
-    plot_heatmap(roc_score, lmbda_vals, eta_vals)
+    plot_heatmap(train_accuracy, lmbda_vals, eta_vals, 'Training Accuracy')
+    plot_heatmap(test_accuracy, lmbda_vals, eta_vals, 'Test Accuracy')
+    plot_heatmap(roc_score, lmbda_vals, eta_vals, 'ROC Score')
     plt.show()
 
 
@@ -132,7 +133,7 @@ def Franke_for_NN():
 
     Y_train, Y_test = scale_data(Y_train, Y_test, StandardScaler)
 
-    epochs = 50
+    epochs = 1
     batch_size = 100
     eta_vals = np.logspace(-7, -4, 4)
     lmbda_vals = np.logspace(-4, 1, 6)
@@ -170,15 +171,15 @@ def Franke_for_NN():
         max_iter=1000,
         tol=1e-7,
         verbose=True)
-    NN_sklearn = NN_sklearn.fit(X_train, Y_train)
+    NN_sklearn = NN_sklearn.fit(X_train, Y_train.ravel())
     test_pred_NNskl = NN_sklearn.predict(X_test)
 
     print(f"R2 score {r2_score(Y_test, test_pred_NNskl)}")
     print(f"MSE {mean_squared_error(Y_test, test_pred_NNskl)}")
 
     sns.set()
-    plot_heatmap(r2score, lmbda_vals, eta_vals)
-    plot_heatmap(mse, lmbda_vals, eta_vals)
+    plot_heatmap(r2score, lmbda_vals, eta_vals, 'R2 Score')
+    plot_heatmap(mse, lmbda_vals, eta_vals, "Test Accuracy")
     plt.show()
 
 
@@ -214,6 +215,8 @@ def logistic_regression_credit_card_data():
     pred_skl = clf.predict(X_test)
     prob_skl = clf.predict_proba(X_test)
 
+    epochs = 2
+    batch_size = 100
     etas = np.logspace(-6, -2, 6)
 
     acc_score = np.zeros(len(etas))
@@ -222,7 +225,8 @@ def logistic_regression_credit_card_data():
     # Grid search
     for i, eta in enumerate(etas):
         beta_SGD = stochastic_gradient_descent(
-            X_train, y_train_onehot, beta_init, epochs=50, batch_size=100, eta=eta)
+            X_train, y_train_onehot, beta_init, epochs=epochs,
+            batch_size=batch_size, eta=eta)
         prob_SGD, pred_SGD = calc_prob_pred(X_test, beta_SGD)
 
         acc_score[i] = accuracy_score(y_test, pred_SGD)
@@ -232,19 +236,22 @@ def logistic_regression_credit_card_data():
             best_prob_SGD, best_pred_SGD = prob_SGD, pred_SGD
 
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_GD, normalize=True, title=' ')
+        y_test, pred_GD, normalize=True, title='Normalized Confusion Matrix (GD)')
     skplt.metrics.plot_confusion_matrix(
-        y_test, best_pred_SGD, normalize=True, title=' ')
+        y_test, best_pred_SGD, normalize=True, title='Normalized Confusion Matrix (SGD)')
     skplt.metrics.plot_confusion_matrix(
-        y_test, pred_skl, normalize=True, title=' ')
-    skplt.metrics.plot_roc(y_test, prob_GD, title=None)
-    skplt.metrics.plot_roc(y_test, best_prob_SGD, title=None)
-    skplt.metrics.plot_roc(y_test, prob_skl, title=None)
+        y_test, pred_skl, normalize=True, title='Normalized Confusion Matrix (Scikit-learn)')
+    skplt.metrics.plot_roc(y_test, prob_GD, title='ROC Curve (GD)')
+    skplt.metrics.plot_roc(y_test, best_prob_SGD, title='ROC Curve (SGD)')
+    skplt.metrics.plot_roc(y_test, prob_skl, title='ROC Curve (Scikit-learn)')
     skplt.metrics.plot_roc(y_test, prob_skl_grid, title=None)
 
-    skplt.metrics.plot_cumulative_gain(y_test, prob_GD, title=None)
-    skplt.metrics.plot_cumulative_gain(y_test, best_prob_SGD, title=None)
-    skplt.metrics.plot_cumulative_gain(y_test, prob_skl, title=None)
+    skplt.metrics.plot_cumulative_gain(
+        y_test, prob_GD, title='Gains Curve (GD)')
+    skplt.metrics.plot_cumulative_gain(
+        y_test, best_prob_SGD, title='Gains Curve (SGD)')
+    skplt.metrics.plot_cumulative_gain(
+        y_test, prob_skl, title='Gains Curve (Scikit-learn)')
 
     plt.show()
 

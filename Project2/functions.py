@@ -8,22 +8,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import confusion_matrix
 
 
-def plot_heatmap(matrix, xtick, ytick):
+def plot_heatmap(matrix, xtick, ytick, title):
     fig, ax = plt.subplots(figsize=(10, 10))
     sns.heatmap(matrix, annot=True, ax=ax, cmap="viridis",
                 xticklabels=xtick, yticklabels=ytick)
     plt.xticks(rotation=90)
+    ax.set_title(title)
     ax.set_ylabel("$\eta$")
     ax.set_xlabel("$\lambda$")
-    plt.show()
-
-
-def plot_confusion_matrix(y, pred):
-    conf_matrix = confusion_matrix(y, pred)
-    sns.heatmap(pd.DataFrame(conf_matrix), annot=True, cmap="YlGnBu", fmt='g')
-    # plt.title('Confusion matrix (default = 1)')
-    plt.ylabel('True value')
-    plt.xlabel('Predicted value')
     plt.show()
 
 
