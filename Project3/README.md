@@ -5,3 +5,5 @@ PDE_NN.py contains code for solving the heat equation using a feedforward neural
 eigenvalue_NN.py contains code for solving an eigenvalue problem using a feedforward neural network.
 
 All the programs can be executed without any additional command line arguments.
+
+Figures are found in /Figures.
