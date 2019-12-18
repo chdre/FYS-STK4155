@@ -102,7 +102,7 @@ def main(dx):
     x, t = tf.reshape(x, (-1, 1)), tf.reshape(t, (-1, 1))
 
     learning_rate = 0.01
-    epochs = 100
+    epochs = 2000
     loss_vals = np.zeros(epochs)
 
     model = DNModel()
