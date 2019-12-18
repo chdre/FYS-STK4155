@@ -102,7 +102,7 @@ def main(dx):
     x, t = tf.reshape(x, (-1, 1)), tf.reshape(t, (-1, 1))
 
     learning_rate = 0.01
-    epochs = 2000
+    epochs = 100
     loss_vals = np.zeros(epochs)
 
     model = DNModel()
@@ -199,6 +199,7 @@ def plot_computed_sol(x, y1, y2, y3, ylab):
     plt.ylabel(ylab)
     plt.tight_layout()
     plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
