@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 plt.rcParams.update({'font.size': 12})
 tf.keras.backend.set_floatx('float64')  # Set default float type
-# np.random.seed(43)
-# tf.random.set_seed(43)
+np.random.seed(42)
+tf.random.set_seed(42)
 
-N = 20
+N = 6
 Nt = 100
 scale_factor = N // 6   # To scale the amount neurons in the network
 
