@@ -89,7 +89,7 @@ def main(dx):
     mean squared, relative and max error for the whole time domain and three
     time steps.
     """
-    from FDM import solver, analytical
+    from euler_PDE import solver, analytical
     u_fdm, x_fdm, t_fdm, Nx, Nt = solver(dx)
 
     N = 100
