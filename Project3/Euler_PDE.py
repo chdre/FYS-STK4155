@@ -19,7 +19,6 @@ def analytical(x, t, L=1):
 
 def solver(dx,
            beta=0.9,    # Stability criterion, valid for beta = [0,1]
-           plot=False
            ):
     """
     Solves a PDE by finite differencing using forward euler. Returns an array u
@@ -42,14 +41,6 @@ def solver(dx,
     # Initial condition, preserves boundary conditions (sin(0) = sin(pi*L/L) = 0)
     u[0, :] = np.sin(np.pi * x)
 
-    if plot:
-        fig = plt.figure(111)
-        ax = fig.add_subplot(111)
-
-        plt.plot(analytical(x, t[0]), label='Analytical')
-        plt.plot(u[0, :], label='Numerical')
-        plt.title(f't={t[0]:.3f}, n={0}')
-
     for n in range(t.shape[0] - 1):
         u[n + 1, 1:-1] = u[n, 1:-1] + dt / dx**2 * \
             (u[n, 2:] - 2 * u[n, 1:-1] + u[n, :-2])
@@ -57,15 +48,6 @@ def solver(dx,
         # Boundaries
         u[n + 1, 0] = 0
         u[n + 1, -1] = 0
-
-        if plot:
-            ax.clear()
-            ax.set_ylim(-1.5, 1.5)
-            ax.plot(x, u[n + 1, :])
-            ax.plot(x, analytical(x, t[n]))
-            ax.set_title(f't={t[n]:.2f}, n={n}')
-            plt.legend(['Numerical', 'Analytical'])
-            plt.pause(0.0001)
 
     return u, x, t, nx, nt
 
