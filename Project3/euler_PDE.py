@@ -94,7 +94,7 @@ def main(dx=0.1):
 
 
 def plot(x, y1, y2, label, xlab, ylab):
-    plt.plot(x, y, label=label)
+    plt.plot(x, y1, label=label)
     plt.plot(x, y2, '--', label=label)
     plt.xlabel(xlab)
     plt.ylabel(ylab)
